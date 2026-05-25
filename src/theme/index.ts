@@ -52,6 +52,18 @@ export const typography = {
     fontWeight: '500' as const,
     letterSpacing: 1.4,
   },
+  stat: {
+    fontSize: 30,
+    fontWeight: '700' as const,
+    letterSpacing: -1,
+    fontVariant: ['tabular-nums'] as ['tabular-nums'],
+  },
+  statSmall: {
+    fontSize: 18,
+    fontWeight: '600' as const,
+    letterSpacing: -0.3,
+    fontVariant: ['tabular-nums'] as ['tabular-nums'],
+  },
 } as const;
 
 export const motion = {

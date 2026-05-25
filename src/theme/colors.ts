@@ -26,6 +26,12 @@ export const colors = {
   positive: '#7BD389',
   negative: '#E27272',
   pressure: '#E2A572',
+
+  emerald: '#2EC07A',
+  emeraldBright: '#5BE0A0',
+  emeraldDeep: '#1B8557',
+  emeraldGlow: 'rgba(91, 224, 160, 0.35)',
+  emeraldSoft: 'rgba(91, 224, 160, 0.10)',
 } as const;
 
 export type ColorToken = keyof typeof colors;
