@@ -38,11 +38,6 @@ export function HeroBackdrop({ assetKey, visible = true }: Props) {
       pointerEvents="none"
       style={[StyleSheet.absoluteFill, styles.clip, fadeStyle]}
     >
-      {/* Anchored bottom-aligned so the subject (figure + skyline + sun,
-          which sit in the lower-middle of the source) lands in the readable
-          band of the screen instead of being darkened by the bottom scrim.
-          height >100% pushes the top of the image off-screen; cover then
-          fills the wider-than-image overflow on the sides. */}
       <Image
         source={ART[assetKey!]}
         resizeMode="cover"
@@ -76,9 +71,11 @@ const styles = StyleSheet.create({
   },
   image: {
     position: 'absolute',
+    top: 0,
     left: 0,
     right: 0,
     bottom: 0,
-    height: '120%',
+    width: '100%',
+    height: '100%',
   },
 });
