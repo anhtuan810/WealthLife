@@ -9,6 +9,7 @@ import Animated, {
 import { LinearGradient } from 'expo-linear-gradient';
 import { colors, radii, spacing, typography } from '../../theme';
 import type { GameEvent } from '../../types/events';
+import { ArtSlot } from '../visual/ArtSlot';
 import { ChoiceButton } from './ChoiceButton';
 
 type Props = {
@@ -49,6 +50,7 @@ export function EventCard({ event, onChoose }: Props) {
             style={StyleSheet.absoluteFill}
           />
           <View style={styles.cardBody}>
+            <ArtSlot assetKey={event.art} category={event.category} aspect={3 / 2} />
             <Text style={styles.eyebrow}>DECISION</Text>
             <Text style={styles.title}>{event.title}</Text>
             {event.fallbackText ? (

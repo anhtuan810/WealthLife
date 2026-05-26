@@ -63,6 +63,7 @@ export type GameEvent = {
   choices: Choice[];
   fallbackText?: string;   // deterministic text used when AI narrative is off (always, for MVP)
   tags?: string[];
+  art?: string;            // asset key, e.g. 'event_student_loan'. Optional; placeholder shows if absent.
 };
 
 // Pacing controller output (§10).
