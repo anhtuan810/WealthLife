@@ -9,9 +9,15 @@ import Animated, {
 } from 'react-native-reanimated';
 import { NetWorthChart } from '../components/NetWorthChart';
 import { PrimaryButton } from '../components/PrimaryButton';
+import { IdentityMedallion } from '../components/visual/IdentityMedallion';
 import { colors, radii, spacing, typography } from '../theme';
 import { FOUNDATION_PATH_BY_ID } from '../data/foundationPaths';
-import { freedomPct, netWorth, type Player } from '../game/player';
+import {
+  STRENGTH_FIELDS,
+  freedomPct,
+  netWorth,
+  type Player,
+} from '../game/player';
 import { useGameStore } from '../state/gameStore';
 
 const fmtMoney = (n: number) => {
@@ -96,6 +102,11 @@ export function RunSummaryScreen({ onPlayAgain }: Props) {
         </View>
       </Animated.View>
 
+      <Animated.View style={[styles.medallionBlock, gradeStyle]}>
+        <Text style={styles.medallionEyebrow}>WHO YOU BECAME</Text>
+        <IdentityMedallion player={player} assetKey="identity_medallion" />
+      </Animated.View>
+
       <View style={styles.statRow}>
         <Stat label="FREEDOM" value={`${freedom}%`} />
         <View style={styles.statDivider} />
@@ -115,7 +126,7 @@ export function RunSummaryScreen({ onPlayAgain }: Props) {
       </View>
 
       <View style={styles.strengthsCard}>
-        <Text style={styles.cardEyebrow}>FINAL STRENGTH PROFILE</Text>
+        <Text style={styles.cardEyebrow}>STRENGTH PROFILE · DETAIL</Text>
         <StrengthsGrid player={player} />
       </View>
 
@@ -154,15 +165,6 @@ function Component({
     </View>
   );
 }
-
-const STRENGTH_FIELDS: ReadonlyArray<{ key: keyof Player; label: string }> = [
-  { key: 'skill', label: 'SKILL' },
-  { key: 'network', label: 'NETWORK' },
-  { key: 'reputation', label: 'REP' },
-  { key: 'discipline', label: 'DISCIPLINE' },
-  { key: 'riskTolerance', label: 'RISK' },
-  { key: 'ambition', label: 'AMBITION' },
-];
 
 function StrengthsGrid({ player }: { player: Player }) {
   return (
@@ -231,6 +233,15 @@ const styles = StyleSheet.create({
     ...typography.label,
     color: colors.textSecondary,
     fontVariant: ['tabular-nums'],
+  },
+  medallionBlock: {
+    alignItems: 'center',
+    gap: spacing.sm,
+  },
+  medallionEyebrow: {
+    ...typography.caption,
+    color: colors.textMuted,
+    letterSpacing: 1.8,
   },
   componentsRow: {
     flexDirection: 'row',

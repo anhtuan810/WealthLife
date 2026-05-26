@@ -10,6 +10,7 @@ import Animated, {
   withTiming,
 } from 'react-native-reanimated';
 import { AmbientGlow } from '../components/AmbientGlow';
+import { HeroBackdrop } from '../components/visual/HeroBackdrop';
 import { PrimaryButton } from '../components/PrimaryButton';
 import { FoundationPathCard } from '../components/FoundationPathCard';
 import { EventCard } from '../components/game/EventCard';
@@ -125,6 +126,7 @@ export function HomeScreen() {
     <View style={styles.root}>
       <StatusBar barStyle="light-content" />
       <AmbientGlow />
+      <HeroBackdrop assetKey="start_hero" visible={stage === 'title'} />
 
       <View style={styles.frame}>
         {/* Title layer */}

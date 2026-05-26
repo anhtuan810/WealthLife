@@ -81,6 +81,20 @@ export function createPlayer(pathId: FoundationPathId): Player {
   };
 }
 
+// Display order for the six strength stats (§9, 0–100). Single source of truth
+// for the summary grid and the strength-hexagon sigil.
+export const STRENGTH_FIELDS: ReadonlyArray<{
+  key: keyof Player;
+  label: string;
+}> = [
+  { key: 'skill', label: 'SKILL' },
+  { key: 'network', label: 'NETWORK' },
+  { key: 'reputation', label: 'REP' },
+  { key: 'discipline', label: 'DISCIPLINE' },
+  { key: 'riskTolerance', label: 'RISK' },
+  { key: 'ambition', label: 'AMBITION' },
+];
+
 export const netWorth = (p: Player): number =>
   p.cash + p.assets + p.investments - p.debt;
 

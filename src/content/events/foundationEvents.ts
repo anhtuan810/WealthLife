@@ -35,6 +35,7 @@ export const FOUNDATION_EVENTS: readonly GameEvent[] = [
     title: 'First Tuition Bill',
     category: 'foundation',
     phase: 'foundation',
+    art: 'event_first_tuition_bill',
     conditions: {
       minAge: 18,
       maxAge: 22,
@@ -77,6 +78,7 @@ export const FOUNDATION_EVENTS: readonly GameEvent[] = [
     title: 'Scholarship Letter',
     category: 'foundation',
     phase: 'foundation',
+    art: 'event_scholarship_offer',
     conditions: {
       minAge: 18,
       maxAge: 19,
@@ -117,6 +119,7 @@ export const FOUNDATION_EVENTS: readonly GameEvent[] = [
     title: 'Major Declaration',
     category: 'foundation',
     phase: 'foundation',
+    art: 'event_major_choice',
     conditions: {
       minAge: 18,
       maxAge: 19,
@@ -397,6 +400,7 @@ export const FOUNDATION_EVENTS: readonly GameEvent[] = [
     title: 'Side Project Window',
     category: 'foundation',
     phase: 'foundation',
+    art: 'event_side_project_window',
     conditions: { minAge: 18, maxAge: 22, phase: 'foundation' },
     fallbackText:
       'A friend mentions a small problem and a smaller budget. You could spend evenings building something for them, double down on hourly work to bank cash this quarter, or protect your runway and put the hours into learning.',
@@ -556,6 +560,7 @@ export const FOUNDATION_EVENTS: readonly GameEvent[] = [
     title: 'Industry Mixer',
     category: 'foundation',
     phase: 'foundation',
+    art: 'event_networking_event',
     conditions: { minAge: 19, maxAge: 21, phase: 'foundation' },
     fallbackText:
       'A friend hands you a ticket to a mid-sized industry mixer. Hot rooms, warm drinks, the occasional useful conversation.',
@@ -590,6 +595,7 @@ export const FOUNDATION_EVENTS: readonly GameEvent[] = [
     title: 'A Senior Operator Takes Interest',
     category: 'foundation',
     phase: 'foundation',
+    art: 'event_find_mentor',
     conditions: { minAge: 19, maxAge: 21, phase: 'foundation' },
     fallbackText:
       'A more senior person — a friend of a friend — offers to meet monthly if you keep the questions sharp.',
@@ -626,6 +632,7 @@ export const FOUNDATION_EVENTS: readonly GameEvent[] = [
     title: 'Open a Brokerage Account',
     category: 'foundation',
     phase: 'foundation',
+    art: 'event_first_brokerage',
     conditions: { minAge: 19, maxAge: 21, phase: 'foundation' },
     fallbackText:
       'You finally open the account. Two clicks, an automatic transfer, and you\'re an investor — at least technically.',
@@ -662,6 +669,7 @@ export const FOUNDATION_EVENTS: readonly GameEvent[] = [
     title: 'First Real Users',
     category: 'foundation',
     phase: 'foundation',
+    art: 'event_side_project_milestone',
     conditions: {
       minAge: 19,
       maxAge: 21,
@@ -703,6 +711,7 @@ export const FOUNDATION_EVENTS: readonly GameEvent[] = [
     title: 'Repayment Schedule',
     category: 'foundation',
     phase: 'foundation',
+    art: 'event_loan_repayment_notice',
     conditions: {
       minAge: 19,
       maxAge: 22,
@@ -826,6 +835,7 @@ export const FOUNDATION_EVENTS: readonly GameEvent[] = [
     title: 'A Buyer Calls',
     category: 'foundation',
     phase: 'foundation',
+    art: 'event_acquihire_offer',
     conditions: {
       minAge: 20,
       maxAge: 22,
@@ -1113,6 +1123,7 @@ export const FOUNDATION_EVENTS: readonly GameEvent[] = [
     title: 'Walk Away From the Degree',
     category: 'foundation',
     phase: 'foundation',
+    art: 'event_drop_out_decision',
     conditions: {
       minAge: 20,
       maxAge: 22,
@@ -1156,6 +1167,7 @@ export const FOUNDATION_EVENTS: readonly GameEvent[] = [
     title: 'A Warm Introduction',
     category: 'foundation',
     phase: 'foundation',
+    art: 'event_mentor_warm_intro',
     conditions: {
       minAge: 21,
       maxAge: 22,
@@ -1195,6 +1207,7 @@ export const FOUNDATION_EVENTS: readonly GameEvent[] = [
     title: 'A Sharp Dip',
     category: 'foundation',
     phase: 'foundation',
+    art: 'event_market_dip_buy',
     conditions: {
       minAge: 21,
       maxAge: 22,
@@ -1234,6 +1247,7 @@ export const FOUNDATION_EVENTS: readonly GameEvent[] = [
     title: 'End of the Foundation',
     category: 'foundation',
     phase: 'foundation',
+    art: 'event_whats_next',
     conditions: { minAge: 22, maxAge: 22, phase: 'foundation' },
     priority: 3, // late-foundation directional event should fire when eligible
     fallbackText:

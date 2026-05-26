@@ -46,6 +46,7 @@ export const CAREER_EVENTS: readonly GameEvent[] = [
     title: 'Performance Review',
     category: 'career',
     phase: 'career',
+    art: 'event_promotion_review',
     conditions: {
       minAge: 22,
       maxAge: 25,
@@ -255,6 +256,7 @@ export const CAREER_EVENTS: readonly GameEvent[] = [
     title: 'An Early Startup Offer',
     category: 'career',
     phase: 'career',
+    art: 'event_startup_offer',
     conditions: {
       minAge: 23,
       maxAge: 25,
@@ -309,6 +311,7 @@ export const CAREER_EVENTS: readonly GameEvent[] = [
     title: 'The Wheels Come Off',
     category: 'career',
     phase: 'career',
+    art: 'event_burnout_recovery_event',
     priority: 5,
     conditions: {
       minAge: 22,
@@ -361,6 +364,7 @@ export const CAREER_EVENTS: readonly GameEvent[] = [
     title: 'Increase the Auto-Buy',
     category: 'investing',
     phase: 'career',
+    art: 'event_etf_recurring_uplift',
     conditions: {
       minAge: 22,
       maxAge: 25,
@@ -407,6 +411,7 @@ export const CAREER_EVENTS: readonly GameEvent[] = [
     title: 'A Refinancing Window',
     category: 'career',
     phase: 'career',
+    art: 'event_loan_consolidation_offer',
     conditions: {
       minAge: 22,
       maxAge: 24,
@@ -502,6 +507,7 @@ export const CAREER_EVENTS: readonly GameEvent[] = [
     title: 'Your Mentor Opens a Door',
     category: 'opportunity',
     phase: 'career',
+    art: 'event_mentor_role_intro',
     conditions: {
       minAge: 23,
       maxAge: 25,
@@ -651,6 +657,7 @@ export const CAREER_EVENTS: readonly GameEvent[] = [
     title: 'A Door That Likes Your Story',
     category: 'opportunity',
     phase: 'career',
+    art: 'event_dropped_out_grit_opportunity',
     weight: 2,
     conditions: {
       minAge: 23,
@@ -707,6 +714,7 @@ export const CAREER_EVENTS: readonly GameEvent[] = [
     title: 'A Consulting Pipeline Opens',
     category: 'opportunity',
     phase: 'career',
+    art: 'event_finished_degree_consulting_role',
     weight: 2,
     conditions: {
       minAge: 22,
@@ -922,6 +930,7 @@ export const CAREER_EVENTS: readonly GameEvent[] = [
     title: 'Director Track',
     category: 'career',
     phase: 'career',
+    art: 'event_corporate_leadership_offer',
     weight: 2,
     conditions: {
       minAge: 23,
@@ -971,6 +980,7 @@ export const CAREER_EVENTS: readonly GameEvent[] = [
     title: 'Scale the Side Business',
     category: 'career',
     phase: 'career',
+    art: 'event_founder_scaling_decision',
     weight: 2,
     conditions: {
       minAge: 23,
@@ -1026,6 +1036,7 @@ export const CAREER_EVENTS: readonly GameEvent[] = [
     title: 'Launch a Personal Brand',
     category: 'career',
     phase: 'career',
+    art: 'event_independent_brand_launch',
     weight: 2,
     conditions: {
       minAge: 23,
@@ -1080,6 +1091,7 @@ export const CAREER_EVENTS: readonly GameEvent[] = [
     title: 'A Builder Wants a Partner',
     category: 'opportunity',
     phase: 'career',
+    art: 'event_universal_cross_pull',
     conditions: {
       // network 22 is reachable for every path (incl. straight_to_work) by
       // mid-career through normal events — keeps the gate real without
