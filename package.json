@@ -24,7 +24,8 @@
     "ios": "expo run:ios",
     "android": "expo run:android",
     "prebuild": "expo prebuild --clean",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "sim:per-path": "tsc -p tsconfig.sim.json && node .sim-build/scripts/runPerPathReport.js"
   },
   "private": true
 }

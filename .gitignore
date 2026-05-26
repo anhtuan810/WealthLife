@@ -35,6 +35,9 @@ yarn-error.*
 # typescript
 *.tsbuildinfo
 
+# sim harness build output
+.sim-build/
+
 # IDE
 .vscode/
 .idea/

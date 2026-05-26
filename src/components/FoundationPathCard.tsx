@@ -9,15 +9,17 @@ import Animated, {
 } from 'react-native-reanimated';
 import { LinearGradient } from 'expo-linear-gradient';
 import { colors, radii, spacing, typography } from '../theme';
-import type { Archetype } from '../game/archetypes';
+import type { FoundationPath } from '../data/foundationPaths';
 
 type Props = {
-  archetype: Archetype;
+  path: FoundationPath;
   selected: boolean;
   onSelect: () => void;
 };
 
-export function ArchetypeCard({ archetype, selected, onSelect }: Props) {
+// Premium dark surface card for the §7 foundation-path picker.
+// Frames a starting CONTEXT, never a class.
+export function FoundationPathCard({ path, selected, onSelect }: Props) {
   const sel = useSharedValue(0);
   const press = useSharedValue(0);
 
@@ -55,10 +57,10 @@ export function ArchetypeCard({ archetype, selected, onSelect }: Props) {
           style={StyleSheet.absoluteFill}
         />
         <View style={styles.body}>
-          <Text style={styles.name}>{archetype.name}</Text>
-          <Text style={styles.vibe}>{archetype.vibe}</Text>
+          <Text style={styles.name}>{path.title}</Text>
+          <Text style={styles.vibe}>{path.subtitle}</Text>
           <View style={styles.tagRow}>
-            {archetype.traits.map((t) => (
+            {path.tags.map((t) => (
               <View key={t} style={styles.tag}>
                 <Text style={styles.tagText}>{t}</Text>
               </View>

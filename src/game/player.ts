@@ -1,47 +1,92 @@
-import type { ArchetypeId } from './archetypes';
-import { STARTING_STATS } from './playerConfig';
+import {
+  FOUNDATION_PATH_BY_ID,
+  type FoundationPathId,
+} from '../data/foundationPaths';
+
+// Per MASTER §27. v3: no locked archetype/careerDirection. Identity is the
+// shape of strengths + flags, narrated at run-end.
+export type Phase = 'foundation' | 'career' | 'growth' | 'freedom';
 
 export type Player = {
-  archetypeId: ArchetypeId;
   age: number;
   month: number;
+  phase: Phase;
+  foundationPath: FoundationPathId;
+
+  // Finances
   cash: number;
+  salary: number;
+  expenses: number;
+  debt: number;
+  investments: number;
   assets: number;
-  liabilities: number;
-  monthlyIncome: number;
-  monthlyExpenses: number;
   passiveIncome: number;
+
+  // Strengths (§9, 0–100)
+  skill: number;
+  network: number;
+  reputation: number;
+  discipline: number;
+  riskTolerance: number;
+  ambition: number;
+
+  // Pressure (0–100)
   stress: number;
-  // Continuous accumulator that nudges discrete stress when it crosses ±1.
+  health: number;
+
+  // Emergent-identity wiring (§26)
+  flags: string[];
+  firedEventIds: string[];
+
+  // Engine-internal: continuous accumulator that nudges discrete stress.
   stressMomentum: number;
-  // One entry per completed month, including month 1 (creation).
+  // One entry per recorded month, including run start.
   netWorthHistory: number[];
 };
 
-export function createPlayer(archetypeId: ArchetypeId): Player {
-  const s = STARTING_STATS[archetypeId];
-  const startingNetWorth = Math.round(s.cash + s.assets - s.liabilities);
+export function createPlayer(pathId: FoundationPathId): Player {
+  const b = FOUNDATION_PATH_BY_ID[pathId].baseline;
+  const startingNetWorth = Math.round(
+    b.cash + b.assets + b.investments - b.debt,
+  );
   return {
-    archetypeId,
-    month: 1,
-    age: s.age,
-    cash: s.cash,
-    assets: s.assets,
-    liabilities: s.liabilities,
-    monthlyIncome: s.monthlyIncome,
-    monthlyExpenses: s.monthlyExpenses,
-    passiveIncome: s.passiveIncome,
-    stress: s.stress,
+    age: 18,
+    month: 0,
+    phase: 'foundation',
+    foundationPath: pathId,
+
+    cash: b.cash,
+    salary: b.salary,
+    expenses: b.expenses,
+    debt: b.debt,
+    investments: b.investments,
+    assets: b.assets,
+    passiveIncome: b.passiveIncome,
+
+    skill: b.skill,
+    network: b.network,
+    reputation: b.reputation,
+    discipline: b.discipline,
+    riskTolerance: b.riskTolerance,
+    ambition: b.ambition,
+
+    stress: b.stress,
+    health: b.health,
+
+    flags: [],
+    firedEventIds: [],
+
     stressMomentum: 0,
     netWorthHistory: [startingNetWorth],
   };
 }
 
-export const netWorth = (p: Player): number => p.cash + p.assets - p.liabilities;
+export const netWorth = (p: Player): number =>
+  p.cash + p.assets + p.investments - p.debt;
 
-// Freedom% = passive income coverage of monthly burn, clamped to [0, 100].
+// Freedom% = passive-income coverage of monthly burn, clamped to [0, 100].
 export const freedomPct = (p: Player): number => {
-  if (p.monthlyExpenses <= 0) return 0;
-  const ratio = p.passiveIncome / p.monthlyExpenses;
+  if (p.expenses <= 0) return 0;
+  const ratio = p.passiveIncome / p.expenses;
   return Math.max(0, Math.min(100, Math.round(ratio * 100)));
 };

@@ -3,7 +3,10 @@ import { TICK_CONFIG } from './playerConfig';
 
 // Pure monthly tick. Deterministic — no RNG, no I/O.
 // Order of operations matters: interest accrues on existing debt BEFORE this month's
-// cashflow, then cashflow lands, then any new shortfall rolls into liabilities.
+// cashflow, then cashflow lands, then any new shortfall rolls into debt.
+//
+// NOTE: this is the legacy tick that powers the dev "Next Month" button. The beat
+// system (§10) will wrap this in a later prompt — keep field names in sync with §27.
 export function tick(p: Player): Player {
   const cfg = TICK_CONFIG;
 
@@ -15,16 +18,15 @@ export function tick(p: Player): Player {
   const age = bumpAge ? p.age + 1 : p.age;
 
   // 2. Existing debt accrues interest first.
-  let liabilities =
-    p.liabilities > 0 ? p.liabilities * (1 + cfg.debtInterestPerMonth) : 0;
+  let debt = p.debt > 0 ? p.debt * (1 + cfg.debtInterestPerMonth) : 0;
 
   // 3. Apply this month's cashflow.
-  const cashflow = p.monthlyIncome + p.passiveIncome - p.monthlyExpenses;
+  const cashflow = p.salary + p.passiveIncome - p.expenses;
   let cash = p.cash + cashflow;
 
-  // Going into the red: clamp cash, roll shortfall into liabilities as new debt.
+  // Going into the red: clamp cash, roll shortfall into debt as new liability.
   if (cash < 0) {
-    liabilities += -cash;
+    debt += -cash;
     cash = 0;
   }
 
@@ -32,11 +34,11 @@ export function tick(p: Player): Player {
   //    Pressure: monthly deficit (scaled by severity) + thin runway (scaled by shortfall)
   //              + debt burden (only when really a burden).
   //    Relief: comfortable surplus + healthy runway + debt covered (or zero).
-  //    Momentum accumulates until it crosses ±1, then nudges the discrete stress level.
+  //    Momentum accumulates until it crosses ±1, then nudges discrete stress by `step`.
   const s = cfg.stress;
-  const monthlyBurn = Math.max(p.monthlyExpenses, 1);
+  const monthlyBurn = Math.max(p.expenses, 1);
   const runway = cash / monthlyBurn; // cash is post-clamp, so runway ≥ 0
-  const debtCovered = liabilities <= 0 || cash >= liabilities;
+  const debtCovered = debt <= 0 || cash >= debt;
 
   const deficitRatio =
     cashflow < 0 ? Math.min(1, -cashflow / monthlyBurn) : 0;
@@ -51,14 +53,13 @@ export function tick(p: Player): Player {
   // Debt is only a real burden when (a) you're in deficit, or
   // (b) it's large vs income AND not comfortably covered by cash.
   const debtVsIncomeRatio =
-    liabilities <= 0
+    debt <= 0
       ? 0
-      : p.monthlyIncome > 0
-        ? liabilities / (p.monthlyIncome * s.debtIncomeMultiple)
+      : p.salary > 0
+        ? debt / (p.salary * s.debtIncomeMultiple)
         : Infinity;
   const debtBurdenActive =
-    liabilities > 0 &&
-    (cashflow < 0 || (debtVsIncomeRatio > 1 && !debtCovered));
+    debt > 0 && (cashflow < 0 || (debtVsIncomeRatio > 1 && !debtCovered));
   const debtBurdenPressure = debtBurdenActive
     ? Math.min(1, debtVsIncomeRatio) * s.debtBurdenWeight
     : 0;
@@ -77,15 +78,15 @@ export function tick(p: Player): Player {
     reliefAmount;
   let stress = p.stress;
   if (momentum >= 1) {
-    stress = Math.min(s.max, stress + 1);
+    stress = Math.min(s.max, stress + s.step);
     momentum -= 1;
   } else if (momentum <= -1) {
-    stress = Math.max(s.min, stress - 1);
+    stress = Math.max(s.min, stress - s.step);
     momentum += 1;
   }
 
   // 5. Net worth history (rounded for clean rendering).
-  const netWorth = Math.round(cash + p.assets - liabilities);
+  const netWorth = Math.round(cash + p.assets + p.investments - debt);
   const netWorthHistory = [...p.netWorthHistory, netWorth];
 
   return {
@@ -93,7 +94,7 @@ export function tick(p: Player): Player {
     month,
     age,
     cash,
-    liabilities,
+    debt,
     stress,
     stressMomentum: momentum,
     netWorthHistory,

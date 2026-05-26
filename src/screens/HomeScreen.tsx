@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { StatusBar, StyleSheet, Text, View } from 'react-native';
+import { ScrollView, StatusBar, StyleSheet, Text, View } from 'react-native';
 import Animated, {
   Easing,
   Extrapolation,
@@ -11,21 +11,26 @@ import Animated, {
 } from 'react-native-reanimated';
 import { AmbientGlow } from '../components/AmbientGlow';
 import { PrimaryButton } from '../components/PrimaryButton';
-import { ArchetypeCard } from '../components/ArchetypeCard';
+import { FoundationPathCard } from '../components/FoundationPathCard';
+import { EventCard } from '../components/game/EventCard';
 import { DashboardLayer } from './DashboardLayer';
-import { ARCHETYPES } from '../game/archetypes';
+import { RunSummaryScreen } from './RunSummaryScreen';
+import { FOUNDATION_PATHS } from '../data/foundationPaths';
 import { useGameStore } from '../state/gameStore';
 import { colors, spacing, typography } from '../theme';
 
-type Stage = 'title' | 'archetypes' | 'dashboard';
-const STAGE_INDEX: Record<Stage, number> = { title: 0, archetypes: 1, dashboard: 2 };
+type Stage = 'title' | 'paths' | 'dashboard';
+const STAGE_INDEX: Record<Stage, number> = { title: 0, paths: 1, dashboard: 2 };
 
 export function HomeScreen() {
   const [stage, setStage] = useState<Stage>('title');
-  const selectedId = useGameStore((s) => s.selectedId);
+  const selectedPath = useGameStore((s) => s.selectedPath);
   const player = useGameStore((s) => s.player);
-  const selectArchetype = useGameStore((s) => s.selectArchetype);
+  const selectFoundationPath = useGameStore((s) => s.selectFoundationPath);
   const startGame = useGameStore((s) => s.startGame);
+  const currentEvent = useGameStore((s) => s.currentEvent);
+  const chooseOption = useGameStore((s) => s.chooseOption);
+  const gameOver = useGameStore((s) => s.gameOver);
 
   const enter = useSharedValue(0);
   const stageV = useSharedValue(0);
@@ -46,11 +51,11 @@ export function HomeScreen() {
   }, [stage, stageV]);
 
   useEffect(() => {
-    continueV.value = withTiming(selectedId ? 1 : 0, {
+    continueV.value = withTiming(selectedPath ? 1 : 0, {
       duration: 260,
       easing: Easing.out(Easing.cubic),
     });
-  }, [selectedId, continueV]);
+  }, [selectedPath, continueV]);
 
   const titleLayerStyle = useAnimatedStyle(() => ({
     opacity:
@@ -78,7 +83,7 @@ export function HomeScreen() {
     ],
   }));
 
-  const archLayerStyle = useAnimatedStyle(() => ({
+  const pathsLayerStyle = useAnimatedStyle(() => ({
     opacity: interpolate(stageV.value, [0, 1, 2], [0, 1, 0], Extrapolation.CLAMP),
     transform: [
       {
@@ -136,47 +141,68 @@ export function HomeScreen() {
           </Animated.View>
 
           <Animated.View style={[styles.ctaBlock, titleCtaStyle]}>
-            <PrimaryButton label="Begin" onPress={() => setStage('archetypes')} />
+            <PrimaryButton label="Begin" onPress={() => setStage('paths')} />
             <Text style={styles.footnote}>Dev build · v0.1</Text>
           </Animated.View>
         </Animated.View>
 
-        {/* Archetype selection layer */}
+        {/* Foundation path selection layer */}
         <Animated.View
-          style={[styles.layer, styles.archLayer, archLayerStyle]}
-          pointerEvents={stage === 'archetypes' ? 'auto' : 'none'}
+          style={[styles.layer, styles.pathsLayer, pathsLayerStyle]}
+          pointerEvents={stage === 'paths' ? 'auto' : 'none'}
         >
-          <View style={styles.archHeader}>
-            <Text style={styles.eyebrow}>CHOOSE YOUR PATH</Text>
-            <Text style={styles.archTitle}>Who are you,{'\n'}today?</Text>
+          <View style={styles.pathsHeader}>
+            <Text style={styles.eyebrow}>AGE 18 · CHOOSE YOUR FOUNDATION</Text>
+            <Text style={styles.pathsTitle}>How you{'\n'}start.</Text>
+            <Text style={styles.pathsLede}>
+              Not who you become. Just where you stand the day you become an adult.
+            </Text>
           </View>
 
-          <View style={styles.cardStack}>
-            {ARCHETYPES.map((a) => (
-              <ArchetypeCard
-                key={a.id}
-                archetype={a}
-                selected={selectedId === a.id}
-                onSelect={() => selectArchetype(a.id)}
+          <ScrollView
+            style={styles.cardScroll}
+            contentContainerStyle={styles.cardStack}
+            showsVerticalScrollIndicator={false}
+          >
+            {FOUNDATION_PATHS.map((p) => (
+              <FoundationPathCard
+                key={p.id}
+                path={p}
+                selected={selectedPath === p.id}
+                onSelect={() => selectFoundationPath(p.id)}
               />
             ))}
-          </View>
+          </ScrollView>
 
           <Animated.View
             style={[styles.continueWrap, continueStyle]}
-            pointerEvents={selectedId ? 'auto' : 'none'}
+            pointerEvents={selectedPath ? 'auto' : 'none'}
           >
             <PrimaryButton label="Continue" onPress={handleContinue} />
           </Animated.View>
         </Animated.View>
 
-        {/* Dashboard layer */}
+        {/* Dashboard / run-summary layer. The summary takes over once
+            gameOver flips; resetSelection (called by Play Again) clears it. */}
         <Animated.View
           style={[styles.layer, styles.dashLayer, dashLayerStyle]}
           pointerEvents={stage === 'dashboard' ? 'auto' : 'none'}
         >
-          {player && <DashboardLayer />}
+          {player ? (
+            gameOver ? (
+              <RunSummaryScreen onPlayAgain={() => setStage('title')} />
+            ) : (
+              <DashboardLayer />
+            )
+          ) : null}
         </Animated.View>
+
+        {/* Decision overlay — rendered at root so the backdrop covers the
+            full screen, escaping the dashLayer's padding. Suppressed once
+            the run ends so it can't appear behind the summary. */}
+        {stage === 'dashboard' && currentEvent && !gameOver ? (
+          <EventCard event={currentEvent} onChoose={chooseOption} />
+        ) : null}
       </View>
     </View>
   );
@@ -199,9 +225,9 @@ const styles = StyleSheet.create({
   titleLayer: {
     justifyContent: 'space-between',
   },
-  archLayer: {
+  pathsLayer: {
     justifyContent: 'flex-start',
-    gap: spacing.xl,
+    gap: spacing.lg,
   },
   dashLayer: {
     paddingTop: 72,
@@ -233,20 +259,30 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     letterSpacing: 2.4,
   },
-  archHeader: {
-    gap: spacing.md,
+  pathsHeader: {
+    gap: spacing.sm,
   },
-  archTitle: {
+  pathsTitle: {
     ...typography.hero,
     color: colors.textPrimary,
     fontSize: 34,
     lineHeight: 38,
     marginTop: spacing.xs,
   },
+  pathsLede: {
+    ...typography.body,
+    color: colors.textSecondary,
+    maxWidth: 320,
+    marginTop: spacing.xs,
+  },
+  cardScroll: {
+    flex: 1,
+  },
   cardStack: {
     gap: spacing.md,
+    paddingBottom: spacing.md,
   },
   continueWrap: {
-    marginTop: 'auto',
+    marginTop: spacing.sm,
   },
 });
