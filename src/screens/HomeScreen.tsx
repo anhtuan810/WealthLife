@@ -14,8 +14,10 @@ import { HeroBackdrop } from '../components/visual/HeroBackdrop';
 import { PrimaryButton } from '../components/PrimaryButton';
 import { FoundationPathCard } from '../components/FoundationPathCard';
 import { EventCard } from '../components/game/EventCard';
+import { PhaseTransitionOverlay } from '../components/game/PhaseTransitionOverlay';
 import { DashboardLayer } from './DashboardLayer';
 import { RunSummaryScreen } from './RunSummaryScreen';
+import { DevMenu } from '../dev/DevMenu';
 import { FOUNDATION_PATHS } from '../data/foundationPaths';
 import { useGameStore } from '../state/gameStore';
 import { colors, spacing, typography } from '../theme';
@@ -32,6 +34,8 @@ export function HomeScreen() {
   const currentEvent = useGameStore((s) => s.currentEvent);
   const chooseOption = useGameStore((s) => s.chooseOption);
   const gameOver = useGameStore((s) => s.gameOver);
+  const phaseTransition = useGameStore((s) => s.phaseTransition);
+  const dismissPhaseTransition = useGameStore((s) => s.dismissPhaseTransition);
 
   const enter = useSharedValue(0);
   const stageV = useSharedValue(0);
@@ -205,6 +209,18 @@ export function HomeScreen() {
         {stage === 'dashboard' && currentEvent && !gameOver ? (
           <EventCard event={currentEvent} onChoose={chooseOption} />
         ) : null}
+
+        {/* Phase-transition ack — rendered after EventCard so it sits on top
+            if both ever coexist. The store guarantees they don't, but the
+            stacking is still correct. */}
+        {stage === 'dashboard' && phaseTransition && !gameOver ? (
+          <PhaseTransitionOverlay
+            phase={phaseTransition}
+            onDismiss={dismissPhaseTransition}
+          />
+        ) : null}
+
+        {__DEV__ ? <DevMenu /> : null}
       </View>
     </View>
   );

@@ -29,6 +29,8 @@ export const ART: Record<string, number> = {
   'event_startup_offer': require('./event_startup_offer.png'),
   'event_universal_cross_pull': require('./event_universal_cross_pull.png'),
   'event_whats_next': require('./event_whats_next.png'),
+  'identity_medallion': require('./identity_medallion.png'),
+  'phase_career': require('./phase_career.png'),
 };
 
 export const hasArt = (key?: string): boolean => !!key && key in ART;

@@ -33,7 +33,7 @@ export function IdentityMedallion({ player, assetKey, size = 240 }: Props) {
         <Image
           source={ART[assetKey!]}
           resizeMode="contain"
-          style={StyleSheet.absoluteFill}
+          style={[StyleSheet.absoluteFill, { width: '100%', height: '100%' }]}
         />
       )}
     </View>

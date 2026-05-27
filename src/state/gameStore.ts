@@ -6,7 +6,7 @@ import {
   FOUNDATION_END_AGE,
   FOUNDATION_SAFETY_AGE,
 } from '../data/constants';
-import { createPlayer, type Player } from '../game/player';
+import { createPlayer, type Phase, type Player } from '../game/player';
 import { tick } from '../game/tick';
 import { ALL_EVENTS } from '../content';
 import type { Ending, GameEvent } from '../types/events';
@@ -21,6 +21,10 @@ import { computeGrade, type GradeResult } from '../systems/grade';
 
 const SKIP_SAFETY_CAP = 24;
 
+// Flag set the first (and only) time the foundation→career overlay fires.
+// Lives on Player.flags so it survives the same way directional flags do.
+export const SEEN_CAREER_TRANSITION_FLAG = 'seen_career_transition';
+
 type AdvanceResult = {
   player: Player;
   monthsSinceLastEvent: number;
@@ -28,6 +32,9 @@ type AdvanceResult = {
   gameOver: boolean;
   endingResult: Ending | null;
   grade: GradeResult | null;
+  // Non-null when this tick crossed a phase boundary the player hasn't
+  // acknowledged yet. The store halts the loop on this just like currentEvent.
+  phaseTransition: Phase | null;
 };
 
 const RUN_QUIET_RESULT = (
@@ -40,6 +47,7 @@ const RUN_QUIET_RESULT = (
   gameOver: false,
   endingResult: null,
   grade: null,
+  phaseTransition: null,
 });
 
 function addUniqueFlag(flags: string[], flag: string): string[] {
@@ -71,8 +79,9 @@ function maybeTransitionToCareer(p: Player): Player {
 // without going through React state per iteration. Order:
 //   1) tick economy (month++, possibly age++)
 //   2) maybe transition foundation → career
-//   3) maybe end the run
-//   4) otherwise: decide beat, maybe pick an event
+//   3) if that crossed a phase boundary, halt for the transition overlay
+//   4) maybe end the run
+//   5) otherwise: decide beat, maybe pick an event
 function advanceMonthStep(
   player: Player,
   monthsSinceLastEvent: number,
@@ -80,6 +89,28 @@ function advanceMonthStep(
   const ticked = tick(player);
   const phased = maybeTransitionToCareer(ticked);
   const nextMonths = monthsSinceLastEvent + 1;
+
+  // Foundation → career, fire-once. Stamp the flag at detection so a force-
+  // dismiss can't re-trigger; the store surfaces phaseTransition and the
+  // UI overlay calls dismissPhaseTransition to resume.
+  if (
+    ticked.phase === 'foundation' &&
+    phased.phase === 'career' &&
+    !phased.flags.includes(SEEN_CAREER_TRANSITION_FLAG)
+  ) {
+    return {
+      player: {
+        ...phased,
+        flags: addUniqueFlag(phased.flags, SEEN_CAREER_TRANSITION_FLAG),
+      },
+      monthsSinceLastEvent: nextMonths,
+      currentEvent: null,
+      gameOver: false,
+      endingResult: null,
+      grade: null,
+      phaseTransition: 'career',
+    };
+  }
 
   if (phased.age >= END_AGE) {
     return {
@@ -89,6 +120,7 @@ function advanceMonthStep(
       gameOver: true,
       endingResult: evaluateEndings(phased),
       grade: computeGrade(phased),
+      phaseTransition: null,
     };
   }
 
@@ -110,6 +142,7 @@ function advanceMonthStep(
     gameOver: false,
     endingResult: null,
     grade: null,
+    phaseTransition: null,
   };
 }
 
@@ -127,6 +160,10 @@ type GameState = {
   endingResult: Ending | null;
   grade: GradeResult | null;
 
+  // Set when a phase boundary was crossed this tick. The UI overlays a
+  // full-screen ack; user dismissal clears it and the loop resumes.
+  phaseTransition: Phase | null;
+
   selectFoundationPath: (id: FoundationPathId) => void;
   startGame: () => void;
   resetSelection: () => void;
@@ -134,6 +171,14 @@ type GameState = {
   advanceMonth: () => void;
   chooseOption: (choiceId: string) => void;
   skipToNextDecision: () => void;
+  dismissPhaseTransition: () => void;
+
+  // __DEV__-only: hand levers for the floating dev menu. These mutate
+  // gameStore directly and bypass the engine — never invoked in release.
+  devSetFreedomPct: (pct: number) => void;
+  devSetPhase: (phase: Phase) => void;
+  devSetAge: (age: number) => void;
+  devSeedRunSummary: () => void;
 };
 
 const INITIAL_RUN_STATE = {
@@ -144,6 +189,7 @@ const INITIAL_RUN_STATE = {
   gameOver: false,
   endingResult: null,
   grade: null,
+  phaseTransition: null,
 } as const;
 
 export const useGameStore = create<GameState>((set, get) => ({
@@ -174,7 +220,13 @@ export const useGameStore = create<GameState>((set, get) => ({
   // it's a quiet month and we just tick forward.
   advanceMonth: () =>
     set((s) => {
-      if (!s.player || s.currentEvent || s.gameOver) return s;
+      if (
+        !s.player ||
+        s.currentEvent ||
+        s.gameOver ||
+        s.phaseTransition
+      )
+        return s;
       const step = advanceMonthStep(s.player, s.monthsSinceLastEvent);
       return {
         player: step.player,
@@ -183,6 +235,7 @@ export const useGameStore = create<GameState>((set, get) => ({
         gameOver: step.gameOver,
         endingResult: step.endingResult,
         grade: step.grade,
+        phaseTransition: step.phaseTransition,
         freedomPulse: s.freedomPulse + 1,
       };
     }),
@@ -214,13 +267,20 @@ export const useGameStore = create<GameState>((set, get) => ({
   // run-end — whichever comes first. Single state commit at the end.
   skipToNextDecision: () =>
     set((s) => {
-      if (!s.player || s.currentEvent || s.gameOver) return s;
+      if (
+        !s.player ||
+        s.currentEvent ||
+        s.gameOver ||
+        s.phaseTransition
+      )
+        return s;
       let player = s.player;
       let monthsSinceLastEvent = s.monthsSinceLastEvent;
       let event: GameEvent | null = null;
       let gameOver = false;
       let endingResult: Ending | null = null;
       let grade: GradeResult | null = null;
+      let phaseTransition: Phase | null = null;
 
       for (let i = 0; i < SKIP_SAFETY_CAP; i++) {
         const step = advanceMonthStep(player, monthsSinceLastEvent);
@@ -230,6 +290,10 @@ export const useGameStore = create<GameState>((set, get) => ({
           gameOver = true;
           endingResult = step.endingResult;
           grade = step.grade;
+          break;
+        }
+        if (step.phaseTransition) {
+          phaseTransition = step.phaseTransition;
           break;
         }
         if (step.currentEvent) {
@@ -245,7 +309,65 @@ export const useGameStore = create<GameState>((set, get) => ({
         gameOver,
         endingResult,
         grade,
+        phaseTransition,
         freedomPulse: s.freedomPulse + 1,
+      };
+    }),
+
+  dismissPhaseTransition: () => set({ phaseTransition: null }),
+
+  // Set freedom% by adjusting passiveIncome relative to current expenses.
+  // Falls back to expenses=1 when expenses<=0 so the math still works.
+  devSetFreedomPct: (pct) =>
+    set((s) => {
+      if (!s.player) return s;
+      const clamped = Math.max(0, Math.min(100, Math.round(pct)));
+      const exp = s.player.expenses > 0 ? s.player.expenses : 1;
+      return {
+        player: {
+          ...s.player,
+          expenses: exp,
+          passiveIncome: Math.round((clamped / 100) * exp),
+        },
+        freedomPulse: s.freedomPulse + 1,
+      };
+    }),
+
+  devSetPhase: (phase) =>
+    set((s) => (s.player ? { player: { ...s.player, phase } } : s)),
+
+  devSetAge: (age) =>
+    set((s) => {
+      if (!s.player) return s;
+      const a = Math.max(18, Math.min(99, Math.round(age)));
+      return { player: { ...s.player, age: a } };
+    }),
+
+  // Seed a fully-formed run-end state so RunSummaryScreen can render even
+  // when no real run has been played. Uses the current player if present;
+  // otherwise spins up a default university player.
+  devSeedRunSummary: () =>
+    set((s) => {
+      const base = s.player ?? createPlayer('university');
+      const seeded: Player = {
+        ...base,
+        age: END_AGE,
+        // give the summary something to look at if the player is fresh
+        passiveIncome: base.passiveIncome > 0 ? base.passiveIncome : 1_400,
+        expenses: base.expenses > 0 ? base.expenses : 2_400,
+        cash: Math.max(base.cash, 8_000),
+        investments: Math.max(base.investments, 25_000),
+        skill: Math.max(base.skill, 55),
+        network: Math.max(base.network, 45),
+        reputation: Math.max(base.reputation, 40),
+        discipline: Math.max(base.discipline, 50),
+      };
+      return {
+        player: seeded,
+        currentEvent: null,
+        gameOver: true,
+        endingResult: evaluateEndings(seeded),
+        grade: computeGrade(seeded),
       };
     }),
 }));

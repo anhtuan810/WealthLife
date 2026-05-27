@@ -1,4 +1,4 @@
-import type { Player } from './player';
+import { freedomPct, type Player } from './player';
 import { TICK_CONFIG } from './playerConfig';
 
 // Pure monthly tick. Deterministic — no RNG, no I/O.
@@ -89,7 +89,7 @@ export function tick(p: Player): Player {
   const netWorth = Math.round(cash + p.assets + p.investments - debt);
   const netWorthHistory = [...p.netWorthHistory, netWorth];
 
-  return {
+  const next: Player = {
     ...p,
     month,
     age,
@@ -99,4 +99,14 @@ export function tick(p: Player): Player {
     stressMomentum: momentum,
     netWorthHistory,
   };
+
+  if (__DEV__) {
+    const fp = freedomPct(next);
+    console.log(
+      `[freedom-trace] age=${next.age} phase=${next.phase} ` +
+        `freedom%=${fp} (passive=${next.passiveIncome} exp=${next.expenses})`,
+    );
+  }
+
+  return next;
 }
