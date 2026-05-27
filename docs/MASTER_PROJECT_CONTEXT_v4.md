@@ -194,6 +194,10 @@ interest. Going into the red is rising pressure, not failure. Debt is paid down 
 
 ## 11. ART — the priority of this revision `[MVP]`
 
+**Status:** MVP art surface complete (as of 2026-05-27). All four
+art-hosting surfaces shipped in v2 riso direction. See ART_REGISTRY for
+detail.
+
 Art is what separates WealthLife from the sea of AI dashboard games. The component craft is
 already premium (animated background, Skia net-worth chart, freedom meter, haptic buttons). The
 gap is **illustrated surfaces** that carry mood and story. This section is the system for filling
@@ -233,10 +237,25 @@ sharp faces), category tint, the shared style anchor. Un-illustrated events fall
 procedural placeholder so cards always look finished. Per-event briefs are written alongside the
 event content (§17 Step 5).
 
-### 11.5 Art-hosting surfaces (MVP)
-Start hero · university foundation key art · phase-transition scenes (Survival→Freedom) ·
-event-card illustration slot + category accents · direction-transition art (corporate/founder/
-freelancer) · run-end identity medallion · milestone/freedom-unlock burst.
+### 11.5 Art-hosting surfaces (MVP, complete)
+
+- **Start hero** (`start_hero`) — portrait full-bleed, riso. Set anchor.
+- **Event-card illustration slot** — landscape 3:2, riso. 58 events, all
+  illustrated. (See ART_REGISTRY §3 for coverage detail.)
+- **Phase-transition scene** (`phase_career`) — portrait full-bleed, riso.
+  Single MVP transition at foundation→career flip.
+- **Run-end identity medallion** (`identity_medallion`) — transparent
+  square frame, gold-on-emerald riso. Wraps procedural StrengthSigil on
+  RunSummaryScreen.
+
+**Deferred to V1.1:**
+- Emotional-arc band scenes (`phase_survival` / `phase_stability` / `phase_growth` / `phase_freedom`).
+  Reachability gated on Phase 3 (35+) content existing.
+- Per-direction transition art variants (corporate/founder/freelancer).
+- Milestone/freedom-unlock bursts.
+
+**Cut from scope:**
+- Category accent illustrations (`cat_*`). Redundant with procedural glyphs.
 
 ### 11.6 Animation `[MVP]` core / `[V1.1]` extras
 Card entrance/exit, monthly transition, stat-change and net-worth number animation, freedom

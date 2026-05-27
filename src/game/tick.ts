@@ -100,13 +100,5 @@ export function tick(p: Player): Player {
     netWorthHistory,
   };
 
-  if (__DEV__) {
-    const fp = freedomPct(next);
-    console.log(
-      `[freedom-trace] age=${next.age} phase=${next.phase} ` +
-        `freedom%=${fp} (passive=${next.passiveIncome} exp=${next.expenses})`,
-    );
-  }
-
   return next;
 }

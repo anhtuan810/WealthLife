@@ -168,10 +168,11 @@ function buildGlyph(category: EventCategory | undefined, w: number, h: number) {
       const stoneY = cy + u * 0.55;
       const seedR = u * 0.35;
       const seedY = stoneY - seedR - 2;
-      path.moveTo(cx - stoneHalf, stoneY);
-      path.lineTo(cx + stoneHalf, stoneY);
-      path.addCircle(cx, seedY, seedR);
-      return path;
+      const builder = Skia.PathBuilder.Make();
+      builder.moveTo(cx - stoneHalf, stoneY);
+      builder.lineTo(cx + stoneHalf, stoneY);
+      builder.addCircle(cx, seedY, seedR);
+      return builder.detach();
     }
   }
 }

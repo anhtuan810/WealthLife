@@ -7,11 +7,6 @@ generated in parallel with code, and nothing breaks.
 
 Status legend: ⬜ placeholder only · 📝 brief written · 🎨 generating · ✅ integrated
 
-> **DIRECTION CHANGE (locked):** The art direction is **bright golden-hour / luminous-aspirational**,
-> NOT the original dark near-black look. The *app chrome* stays dark (#08090B, dark cards, white
-> text); the *art* is bright. The look is "luminous imagery inside a dark premium app." Brand colors
-> are unchanged. This doc has been updated throughout to reflect that. (See §5 for history.)
-
 ---
 
 ## 0. How we use GPT Image (read once)
@@ -26,16 +21,58 @@ A set only works if it looks like *one* set. GPT Image drifts between generation
    logos, no watermark."* (Founder note: incidental document text in event scenes is acceptable —
    lean in rather than hide AI — but compose with clear negative space where the card's UI text
    overlays.)
-4. **Backgrounds:** full-scene art is bright/luminous (NOT dark). Overlay assets (medallion,
+4. **Backgrounds:** full-scene art is bright (cream paper for riso). Overlay assets (medallion,
    accents, burst) request a transparent center/background.
 5. **Aspect by surface:** event cards → **landscape 3:2 (1536×1024), subject UPPER-CENTER**; hero →
    portrait full-bleed; overlays → square. Export large; the app downscales.
 6. **Filename = asset key + `.png`**, lowercase. Drop into `src/assets/art/` AND add a `require`
    line to `src/assets/art/index.ts` (or it shows the placeholder).
 
+### Direction history
+
+1. **v1 — Bright golden-hour photoreal** (initial MVP push). Locked across
+   the 26 originally-shipped event PNGs + start_hero + phase_career. Validated
+   across the emotional range incl. pressure beats. Shipped and worked, but
+   the founder concluded the AI-generated photoreal look had become the
+   market's default tell for "AI art" and didn't differentiate the game.
+
+2. **v2 — Risograph / editorial print (CURRENT, locked).** Pivoted on
+   2026-05-27. Limited spot-color palette (gold #D9B26A, dawn-blue
+   #7CB8FF, deep ink #08090B, cream paper #F5F2EA), heavy halftone grain,
+   subtle misregistration, magazine-spot-illustration energy. Hides AI
+   fingerprints, on-trend with the 2026 print-revival editorial moment,
+   lines up with the locked "mature, calm, premium" tone (§4). Anchor:
+   start_hero.png. All 58 events + hero + medallion + phase_career
+   regenerated in this direction.
+
+   Pipeline rule: every generation re-uploads start_hero.png as the
+   reference image. Batch-mode (single ChatGPT thread, multiple images)
+   was tried and failed — the model anchored on its own first generation
+   and reproduced it instead of following subsequent scene lines. One
+   image per generation with reference re-upload is the only reliable
+   path for this style.
+
 ---
 
-## 1. Master Style Block — BRIGHT (paste at the top of every full-scene prompt)
+## 1. Master Style Block — RISO (paste at the top of every full-scene prompt)
+
+> A premium editorial illustration in RISOGRAPH PRINT style for a high-end
+> mobile wealth-strategy life sim. Limited spot-color palette of warm gold
+> (#D9B26A), soft dawn-blue (#7CB8FF), and deep ink near-black (#08090B), on
+> a cream paper background (#F5F2EA). Visible halftone dot texture and soft
+> grain throughout. Subtle misregistration where colors overlap, the way real
+> riso prints layer. Restrained, intentional, crafted. Magazine-cover energy
+> — the polish of a New Yorker or Monocle spot illustration in print form.
+> Mature, calm, premium. Never casino, never cartoon, never children's-book,
+> never corporate explainer.
+
+**Overlay/transparent variant:** drop the scene/background language; end with *"Isolated subject on
+a fully transparent background (alpha), no scene — just the motif on transparent. Export PNG with
+transparency."*
+
+### v1 archive — Bright golden-hour (superseded 2026-05-27)
+
+Preserved for reference only. Do not use for new generations.
 
 > A premium, cinematic, luminous illustration for a high-end mobile wealth-strategy game. Bright,
 > hopeful, aspirational golden-hour atmosphere — warm natural sunlight, soft volumetric light,
@@ -46,60 +83,48 @@ A set only works if it looks like *one* set. GPT Image drifts between generation
 > growth, generous off-white / cream highlights (#F5F2EA). High-key but cinematic, soft shadows,
 > shallow depth of field, generous negative space, modern editorial composition.
 
-**Do:** warm natural light, a single clear subject, optimism through light and openness.
-**Avoid:** clutter, faces in sharp detail, heavy darkness or gloom, oversaturation, neon.
-
-**Overlay/transparent variant:** drop the scene/background language; end with *"Isolated subject on
-a fully transparent background (alpha), no scene — just the glowing motif. Export PNG with
-transparency."*
-
 ---
 
 ## 2. Structural / hero assets
 
-| Key | Surface | Aspect / bg | Status | Prompt (bright direction; append after §1 + reference) |
-|---|---|---|---|---|
-| `start_hero` | Start screen full-bleed (**Style Anchor — the locked reference**) | Portrait / luminous | ✅ | A lone figure seen from behind on a hilltop, standing calm at the foot of a luminous city at golden dawn, the sun rising warm over the skyline, light spilling toward the viewer — the open promise of the day. Optimistic, aspirational, a beginning. (Approved image is the reference upload for all others.) |
-| `path_university` | Foundation-path card | Square / transparent | ⬜📝 | Bright emblem-scene: an arched scholarly hall dissolving into warm light, a faint open book of light, gold-and-blue. Symbolic. (Only MVP path; others excluded.) |
-| `phase_survival` | Phase-transition scene | Portrait / luminous | ⬜📝 | A quiet sunlit street, a small bright window ahead — tense but hopeful, early morning. Room at top for a title. |
-| `phase_stability` | Phase-transition scene | Portrait / luminous | ⬜📝 | A warm-lit window glowing over a calm bright city — the first solid ground. Room at top for a title. |
-| `phase_growth` | Phase-transition scene | Portrait / luminous | ⬜📝 | A bright skyline rising, threaded with emerald light moving upward — compounding momentum. Room at top for a title. |
-| `phase_freedom` | Phase-transition scene | Portrait / luminous | ⬜📝 | A wide open dawn horizon above the city, gold light flooding in, the figure free and unhurried. Room at top for a title. (Verify the 18–25 slice reaches this phase before generating.) |
-| `identity_medallion` | Run-end "who you became" frame | Square / transparent | ⬜📝 | An ornate but minimal circular medallion frame of thin gold and faint emerald light, completely empty hollow transparent center (procedural strength-sigil renders inside). Ceremonial, premium. |
-| `milestone_burst` | Freedom-unlock moment | Square / transparent | ⬜📝 | A soft radial bloom of gold-and-emerald light, fine sparks, fading to transparent. Restrained, no confetti. |
-
-Excluded for MVP (university-only): `path_vocational`, `path_self_taught`, `path_straight_to_work`.
-Likely redundant (ArtSlot already draws procedural category glyphs): the five `cat_*` accents —
-decide before generating.
+| Surface | Aspect | Status | Notes |
+|---|---|---|---|
+| `start_hero` | Portrait full-bleed | ✅ riso | The set's style anchor. Re-upload on every other generation. |
+| `event_*` (×58) | Landscape 3:2 (1536×1024) | ✅ riso | 26 original + 32 gap-fill = 58, all in riso. Subject upper-center. |
+| `identity_medallion` | Square, transparent center | ✅ riso/gold | Frame around procedural StrengthSigil on RunSummaryScreen. PNG transparency was the blocker (GPT Image bg unreliable) — solved via luminance-keyed background removal. |
+| `phase_career` | Portrait full-bleed | ✅ riso | Single MVP phase-transition scene. Fires once at foundation→career flip (age ~22). |
+| `phase_survival` / `phase_stability` / `phase_growth` / `phase_freedom` | Portrait full-bleed | ⏸ V1.1 | See §5 deferral rationale. |
+| `cat_*` accents | n/a | ✕ CUT | Redundant with ArtSlot's procedural category glyphs. Decision: do not produce. |
+| Direction-transition art (corporate/founder/freelancer variants) | Portrait full-bleed | ⏸ V1.1 | phase_career fills this role generically for MVP. Per-direction variants for V1.1. |
 
 ---
 
-## 3. Per-event illustrations — ✅ COMPLETE (26 of 26, bright golden-hour, landscape 3:2)
+## 3. Event coverage
 
-All 26 MVP university-slice event PNGs are generated, registered in `index.ts`, and rendering.
+Total events in `src/content/events/`: **58**
+Events with riso art: **58 (100%)**
+Last audit: 2026-05-27
 
-- **Composition (fixed):** landscape 3:2, **1536×1024**, single symbolic subject placed
-  **UPPER-CENTER** filling most of the frame (the slot shows the upper region; subject must be high).
-  Objects/hands/light, no sharp faces. Bright golden-hour, reframed toward possibility/agency.
-- **Asset key = `event_<id>`**, file `event_<id>.png`.
-- **Prompt template:** [§1 BRIGHT block] + "Match the attached reference exactly." + "WIDE
-  HORIZONTAL 3:2 LANDSCAPE, subject upper-center: **[hopeful one-line event scene]**." + the no-text
-  closer.
+The original 26 (registered at MVP start) and the 32 gap-fill events
+(added 2026-05-27 after audit) are all in the v2 riso direction.
 
-Registered event keys (all ✅): acquihire_offer, burnout_recovery_event, corporate_leadership_offer,
-drop_out_decision, dropped_out_grit_opportunity, etf_recurring_uplift, find_mentor,
-finished_degree_consulting_role, first_brokerage, first_tuition_bill, founder_scaling_decision,
-independent_brand_launch, loan_consolidation_offer, loan_repayment_notice, major_choice,
-market_dip_buy, mentor_role_intro, mentor_warm_intro, networking_event, promotion_review,
-scholarship_offer, side_project_milestone, side_project_window, startup_offer, universal_cross_pull,
-whats_next. (Per-event scene lines: see chat history / regenerable by the PM on request.)
+Three near-duplicate events share theme but render as separate images
+for now:
+- `university_income_relief_debt`
+- `university_income_relief_lowsalary`
+- `university_income_relief_stress`
 
-When a PNG doesn't exist or isn't registered, the slot shows the procedural placeholder, so cards
-always look finished.
+(Optional optimization: collapse to one shared PNG via `index.ts`. Not
+done yet; defer until art-content cost matters.)
+
+To re-audit coverage in future sessions, the read-only CC prompt that
+produces the event/art coverage table is preserved in the chat history
+of the 2026-05-27 session and is reproducible from event content.
 
 ---
 
 ## 4. Code contract notes (so art and code don't desync)
+
 - **ArtSlot `<Image>` must have explicit `width:'100%'` + `height:'100%'`** alongside absolute
   insets — NOT `StyleSheet.absoluteFill` alone. Without explicit dims, RN's Image lays out at
   intrinsic size anchored top-left and `cover` is bypassed (this caused a long debugging session;
@@ -109,9 +134,83 @@ always look finished.
   not a plain reload. Stale image after restart = cache/binary, never a framing bug.
 - The `ART` map in `index.ts` must have one `require` line per PNG; the key = filename minus `.png`.
 
-## 5. Open questions / history
+### IdentityMedallion PNG-frame render path (resolved 2026-05-27)
+
+**Symptom:** Run Summary screen showed only the procedural StrengthSigil; the
+PNG frame did not render. Overwriting the PNG with different files produced
+zero visible change.
+
+**Root cause:** Two layers compounded — (a) GPT Image's PNG transparency
+is unreliable and the medallion frame shipped with an opaque black
+background, making it nearly invisible over the dark chrome; (b) the
+component's render branch had a sizing/z-order issue that meant even a
+properly-transparent PNG didn't composite correctly.
+
+**Fix:** Luminance-key the black-bg PNG to alpha (ImageMagick or any tool
+that supports alpha keying) BEFORE saving as the final asset. On the
+component side, ensure the `<Image>` has explicit width/height (not just
+`StyleSheet.absoluteFill`) and the z-order draws the frame above any
+procedural bounding circle StrengthSigil produces.
+
+**Lesson:** For any overlay-style art slot (transparent center, edge
+ornament), validate transparency in isolation against the app chrome
+color BEFORE registering in the ART map. The composited preview is the
+only honest check.
+
+---
+
+## 5. Decisions on record
+
+### Phase-transition scene scope (decided 2026-05-27)
+
+**Decision:** MVP ships with exactly ONE phase-transition scene
+(`phase_career`) at the foundation→career flip around age 22. The four
+emotional-arc band scenes (`phase_survival` / `phase_stability` /
+`phase_growth` / `phase_freedom`) are deferred to V1.1.
+
+**Why:** A freedom-trace investigation on 2026-05-27 showed
+`freedomPct` sits near 0 across the entire 18–25 MVP slice in a
+representative run. The four band scenes would key off `freedomPct`
+threshold crossings, but those crossings don't happen — passive income
+in the MVP slice is too scarce relative to monthly expenses for
+`freedomPct` to climb meaningfully. The Survival→Freedom emotional arc is
+inherently a full-lifespan feature; the 18–25 MVP slice doesn't have the
+horizon for it. Foundation→career at 22 is the ONE transition that
+happens reliably in every run and is meaningful enough to warrant a
+full-screen scene.
+
+**If revisited in V1.1:** When career-phase content extends and runs reach
+age 35+ (Phase 3, currently FUTURE per §6), regenerate the four band
+scenes and key them off `freedomPct` band-crossings using the existing
+DevMenu FREEDOM% chips as the test harness. The naming reconciliation
+worth recording: the `phase` field is foundation/career/growth/freedom, but
+the art-key arc is survival/stability/growth/freedom (the emotional arc,
+not the structural phase). For V1.1, scenes key off the emotional arc
+(freedomPct bands), not the structural phase field.
+
+### `cat_*` category accents (decided 2026-05-27)
+
+**Decision:** CUT for MVP. Do not produce.
+
+**Why:** ArtSlot's procedural category glyphs already convey category
+visually. Adding illustrated category accents would duplicate the signal
+at no clarity gain. Five images of overbuild avoided.
+
+### Art direction (decided 2026-05-27)
+
+**Decision:** Locked riso/printmaking. See §0 direction history and §1
+master style block.
+
+### Per-event illustration vs procedural placeholder
+
+**Decision:** Placeholder is a legitimate ship state for the long tail.
+If V1.2+ adds new events, art is encouraged but not blocking — the
+procedural placeholder reads as "moment without illustration," not as
+broken. The asset-key contract means a new event can ship without art
+and gain art later via a single asset drop, no code change.
+
+---
+
+## 6. Open questions
+
 - Identity layer depth: single medallion now vs a run-end emblem set later (`[V1.1]`).
-- Whether phase scenes animate or hold still — decide when the transition beat is built. (No
-  phase-transition moment exists in the loop yet; building it is a new beat, not just a slot.)
-- History: original direction was dark near-black "Bloomberg terminal" luxury; changed to bright
-  golden-hour aspirational after validation testing. App chrome stayed dark.
