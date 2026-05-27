@@ -89,6 +89,7 @@ export const CAREER_EVENTS: readonly GameEvent[] = [
     title: 'A Conflict Hits the Open',
     category: 'career',
     phase: 'career',
+    art: 'event_manager_conflict',
     conditions: { minAge: 22, maxAge: 25, phase: 'career' },
     fallbackText:
       'A disagreement with your manager spills into the open. Reading the room would have been smarter; saying nothing now would be smarter still.',
@@ -124,6 +125,7 @@ export const CAREER_EVENTS: readonly GameEvent[] = [
     title: 'A Real Course or a Cheap One',
     category: 'career',
     phase: 'career',
+    art: 'event_skill_upgrade_certificate',
     conditions: { minAge: 22, maxAge: 24, phase: 'career' },
     fallbackText:
       'A new specialization is suddenly the floor for the next promotion. The certification path costs money; the self-taught path costs sleep.',
@@ -161,6 +163,7 @@ export const CAREER_EVENTS: readonly GameEvent[] = [
     title: 'The Apartment Upgrade',
     category: 'career',
     phase: 'career',
+    art: 'event_lifestyle_inflation_apartment',
     conditions: {
       minAge: 23,
       maxAge: 25,
@@ -202,6 +205,7 @@ export const CAREER_EVENTS: readonly GameEvent[] = [
     title: 'A Listing You Can Afford',
     category: 'career',
     phase: 'career',
+    art: 'event_property_deal',
     conditions: {
       minAge: 24,
       maxAge: 25,
@@ -453,6 +457,7 @@ export const CAREER_EVENTS: readonly GameEvent[] = [
     title: 'A Quiet Sabbatical',
     category: 'career',
     phase: 'career',
+    art: 'event_sabbatical_window',
     conditions: {
       minAge: 24,
       maxAge: 25,
@@ -556,6 +561,7 @@ export const CAREER_EVENTS: readonly GameEvent[] = [
     title: 'First Subcontractor',
     category: 'career',
     phase: 'career',
+    art: 'event_agency_expansion',
     conditions: {
       minAge: 23,
       maxAge: 25,
@@ -604,6 +610,7 @@ export const CAREER_EVENTS: readonly GameEvent[] = [
     title: 'From Retainer to Studio',
     category: 'career',
     phase: 'career',
+    art: 'event_studio_launch',
     conditions: {
       minAge: 24,
       maxAge: 25,
@@ -771,6 +778,7 @@ export const CAREER_EVENTS: readonly GameEvent[] = [
     title: 'The Lifestyle Catches Up',
     category: 'pressure',
     phase: 'career',
+    art: 'event_inflated_lifestyle_trap',
     conditions: {
       minAge: 23,
       maxAge: 25,
@@ -812,6 +820,7 @@ export const CAREER_EVENTS: readonly GameEvent[] = [
     title: 'Same Pattern, Different Year',
     category: 'pressure',
     phase: 'career',
+    art: 'event_burnout_relapse_warning',
     priority: 4,
     conditions: {
       minAge: 23,
@@ -868,6 +877,7 @@ export const CAREER_EVENTS: readonly GameEvent[] = [
     title: 'Alumni Referral',
     category: 'opportunity',
     phase: 'career',
+    art: 'event_bigco_alumni_referral',
     weight: 2,
     conditions: {
       minAge: 22,
@@ -1158,6 +1168,7 @@ export const CAREER_EVENTS: readonly GameEvent[] = [
     title: 'Reorg',
     category: 'pressure',
     phase: 'career',
+    art: 'event_career_layoff_with_fund',
     priority: 4,
     conditions: {
       // Salary/cash floor is high enough that the shock can't fall on a
@@ -1223,6 +1234,7 @@ export const CAREER_EVENTS: readonly GameEvent[] = [
     title: 'Reorg',
     category: 'pressure',
     phase: 'career',
+    art: 'event_career_layoff_no_fund',
     priority: 4,
     conditions: {
       minAge: 23,

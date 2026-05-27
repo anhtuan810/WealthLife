@@ -162,6 +162,7 @@ export const FOUNDATION_EVENTS: readonly GameEvent[] = [
     title: 'Help From Home',
     category: 'foundation',
     phase: 'foundation',
+    art: 'event_parental_support_offer',
     conditions: { minAge: 18, maxAge: 19, phase: 'foundation' },
     fallbackText:
       'A parent offers to send a monthly cheque for the next couple of years. Accepting it would close the runway gap; declining keeps the relationship clean.',
@@ -198,6 +199,7 @@ export const FOUNDATION_EVENTS: readonly GameEvent[] = [
     title: 'Where You Live',
     category: 'foundation',
     phase: 'foundation',
+    art: 'event_where_you_live',
     conditions: { minAge: 18, maxAge: 22, phase: 'foundation' },
     fallbackText:
       'Your lease starts in two weeks. You can take the cheap room in a quiet part of town, split a place near the people you want to be around, or move back in with family and bank the difference.',
@@ -233,6 +235,7 @@ export const FOUNDATION_EVENTS: readonly GameEvent[] = [
     title: 'Campus Library Job',
     category: 'foundation',
     phase: 'foundation',
+    art: 'event_first_campus_job',
     conditions: {
       minAge: 18,
       maxAge: 19,
@@ -274,6 +277,7 @@ export const FOUNDATION_EVENTS: readonly GameEvent[] = [
     title: 'Apprenticeship Offer',
     category: 'foundation',
     phase: 'foundation',
+    art: 'event_apprenticeship_offer',
     conditions: {
       minAge: 18,
       maxAge: 19,
@@ -314,6 +318,7 @@ export const FOUNDATION_EVENTS: readonly GameEvent[] = [
     title: 'First Real Client',
     category: 'foundation',
     phase: 'foundation',
+    art: 'event_first_freelance_client',
     conditions: {
       minAge: 18,
       maxAge: 19,
@@ -355,6 +360,7 @@ export const FOUNDATION_EVENTS: readonly GameEvent[] = [
     title: 'Warehouse Floor',
     category: 'foundation',
     phase: 'foundation',
+    art: 'event_warehouse_role',
     conditions: {
       minAge: 18,
       maxAge: 19,
@@ -436,6 +442,7 @@ export const FOUNDATION_EVENTS: readonly GameEvent[] = [
     title: 'Summer at a Major Firm',
     category: 'foundation',
     phase: 'foundation',
+    art: 'event_bigco_internship',
     conditions: {
       minAge: 19,
       maxAge: 21,
@@ -478,6 +485,7 @@ export const FOUNDATION_EVENTS: readonly GameEvent[] = [
     title: 'Trade Certification',
     category: 'foundation',
     phase: 'foundation',
+    art: 'event_vocational_certification',
     conditions: {
       minAge: 19,
       maxAge: 21,
@@ -520,6 +528,7 @@ export const FOUNDATION_EVENTS: readonly GameEvent[] = [
     title: 'Word of Mouth',
     category: 'foundation',
     phase: 'foundation',
+    art: 'event_first_freelance_referral',
     conditions: {
       minAge: 19,
       maxAge: 21,
@@ -753,6 +762,7 @@ export const FOUNDATION_EVENTS: readonly GameEvent[] = [
     title: 'Mandatory Overtime',
     category: 'foundation',
     phase: 'foundation',
+    art: 'event_overtime_spiral',
     conditions: {
       minAge: 19,
       maxAge: 22,
@@ -877,6 +887,7 @@ export const FOUNDATION_EVENTS: readonly GameEvent[] = [
     title: 'Return Offer',
     category: 'foundation',
     phase: 'foundation',
+    art: 'event_bigco_full_time_offer',
     conditions: {
       minAge: 21,
       maxAge: 22,
@@ -920,6 +931,7 @@ export const FOUNDATION_EVENTS: readonly GameEvent[] = [
     title: 'Retainer Conversation',
     category: 'foundation',
     phase: 'foundation',
+    art: 'event_freelance_retainer',
     conditions: {
       minAge: 20,
       maxAge: 22,
@@ -962,6 +974,7 @@ export const FOUNDATION_EVENTS: readonly GameEvent[] = [
     title: 'Lead Hand Offer',
     category: 'foundation',
     phase: 'foundation',
+    art: 'event_trade_promotion',
     conditions: {
       minAge: 20,
       maxAge: 22,
@@ -1003,6 +1016,7 @@ export const FOUNDATION_EVENTS: readonly GameEvent[] = [
     title: 'Build a Buffer',
     category: 'foundation',
     phase: 'foundation',
+    art: 'event_emergency_fund_decision',
     conditions: { minAge: 21, maxAge: 22, phase: 'foundation' },
     fallbackText:
       'You finally have enough margin to choose: park a real cushion, push it into the index, or upgrade the life around you.',
@@ -1040,6 +1054,7 @@ export const FOUNDATION_EVENTS: readonly GameEvent[] = [
     title: 'A New Car',
     category: 'foundation',
     phase: 'foundation',
+    art: 'event_lifestyle_temptation',
     conditions: {
       minAge: 21,
       maxAge: 22,
@@ -1080,6 +1095,7 @@ export const FOUNDATION_EVENTS: readonly GameEvent[] = [
     title: 'The Body Sends a Note',
     category: 'foundation',
     phase: 'foundation',
+    art: 'event_burnout_warning',
     conditions: {
       minAge: 20,
       maxAge: 22,
@@ -1313,6 +1329,7 @@ export const FOUNDATION_EVENTS: readonly GameEvent[] = [
     title: 'A Note From Financial Aid',
     category: 'pressure',
     phase: 'foundation',
+    art: 'event_university_income_relief_lowsalary',
     priority: 4,
     conditions: {
       minAge: 19,
@@ -1372,6 +1389,7 @@ export const FOUNDATION_EVENTS: readonly GameEvent[] = [
     title: 'A Note From Financial Aid',
     category: 'pressure',
     phase: 'foundation',
+    art: 'event_university_income_relief_debt',
     priority: 4,
     conditions: {
       minAge: 19,
@@ -1431,6 +1449,7 @@ export const FOUNDATION_EVENTS: readonly GameEvent[] = [
     title: 'A Note From Financial Aid',
     category: 'pressure',
     phase: 'foundation',
+    art: 'event_university_income_relief_stress',
     priority: 4,
     conditions: {
       minAge: 19,
