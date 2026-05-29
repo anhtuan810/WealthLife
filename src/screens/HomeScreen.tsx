@@ -19,6 +19,7 @@ import { DashboardLayer } from './DashboardLayer';
 import { RunSummaryScreen } from './RunSummaryScreen';
 import { DevMenu } from '../dev/DevMenu';
 import { FOUNDATION_PATHS } from '../data/foundationPaths';
+import { leaningFromFlags } from '../game/player';
 import { useGameStore } from '../state/gameStore';
 import { colors, spacing, typography } from '../theme';
 
@@ -207,7 +208,13 @@ export function HomeScreen() {
             full screen, escaping the dashLayer's padding. Suppressed once
             the run ends so it can't appear behind the summary. */}
         {stage === 'dashboard' && currentEvent && !gameOver ? (
-          <EventCard event={currentEvent} onChoose={chooseOption} />
+          <EventCard
+            event={currentEvent}
+            onChoose={chooseOption}
+            // Surface the player's accumulated leaning so the direction
+            // beat can highlight the aligned option as context.
+            leaning={player ? leaningFromFlags(player.flags) : null}
+          />
         ) : null}
 
         {/* Phase-transition ack — rendered after EventCard so it sits on top

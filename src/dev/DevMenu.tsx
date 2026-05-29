@@ -13,6 +13,7 @@ import { RunSummaryScreen } from '../screens/RunSummaryScreen';
 import { useGameStore } from '../state/gameStore';
 import type { Phase } from '../game/player';
 import { colors, radii, spacing, typography } from '../theme';
+import { LifeFigurePreview } from './LifeFigurePreview';
 
 // __DEV__-only manual preview/inspection tool. Mounted by HomeScreen behind
 // an `if (__DEV__)` guard so it cannot reach release bundles. Lets us pop
@@ -37,6 +38,7 @@ export function DevMenu() {
   const [menuOpen, setMenuOpen] = useState(false);
   const [scene, setScene] = useState<SceneKey | null>(null);
   const [summaryOpen, setSummaryOpen] = useState(false);
+  const [lifeFigureOpen, setLifeFigureOpen] = useState(false);
 
   const player = useGameStore((s) => s.player);
   const devSetFreedomPct = useGameStore((s) => s.devSetFreedomPct);
@@ -55,6 +57,11 @@ export function DevMenu() {
     if (!player || !endingResult || !grade) devSeedRunSummary();
     setMenuOpen(false);
     setSummaryOpen(true);
+  };
+
+  const openLifeFigure = () => {
+    setMenuOpen(false);
+    setLifeFigureOpen(true);
   };
 
   return (
@@ -96,6 +103,7 @@ export function DevMenu() {
                     <Chip key={k} label={k} onPress={() => openScene(k)} />
                   ))}
                   <Chip label="Run Summary" onPress={openSummary} wide />
+                  <Chip label="Life Figure" onPress={openLifeFigure} wide />
                 </Grid>
               </Section>
 
@@ -179,6 +187,24 @@ export function DevMenu() {
           <RunSummaryScreen onPlayAgain={() => setSummaryOpen(false)} />
           <Pressable
             onPress={() => setSummaryOpen(false)}
+            style={styles.summaryClose}
+            hitSlop={8}
+          >
+            <Text style={styles.summaryCloseLabel}>CLOSE</Text>
+          </Pressable>
+        </View>
+      </Modal>
+
+      <Modal
+        visible={lifeFigureOpen}
+        transparent={false}
+        animationType="slide"
+        onRequestClose={() => setLifeFigureOpen(false)}
+      >
+        <View style={styles.lifeFigureRoot}>
+          <LifeFigurePreview />
+          <Pressable
+            onPress={() => setLifeFigureOpen(false)}
             style={styles.summaryClose}
             hitSlop={8}
           >
@@ -389,6 +415,10 @@ const styles = StyleSheet.create({
     backgroundColor: colors.bg,
     paddingTop: 72,
     paddingHorizontal: spacing.xl,
+  },
+  lifeFigureRoot: {
+    flex: 1,
+    backgroundColor: colors.bg,
   },
   summaryClose: {
     position: 'absolute',

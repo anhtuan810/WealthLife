@@ -348,6 +348,7 @@ function snapshotToPlayer(snap: EndStateSnapshot): Player {
     foundationPath: FOUNDATION_PATHS[0].id,
     flags: [],
     firedEventIds: [],
+    direction: null,
     stressMomentum: 0,
     netWorthHistory: [],
   };

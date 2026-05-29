@@ -173,6 +173,13 @@ export function applyChoice(
     next.flags = Array.from(merged);
   }
 
+  // Direction commitment — written by the choose_direction beat. Once set,
+  // the figure outfit (and any future direction-aware logic) reads from this
+  // field rather than inferring from leaning_* flags.
+  if (choice.setsDirection) {
+    next.direction = choice.setsDirection;
+  }
+
   if (!event.repeatable && !next.firedEventIds.includes(event.id)) {
     next.firedEventIds = [...next.firedEventIds, event.id];
   }

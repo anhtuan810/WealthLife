@@ -38,6 +38,58 @@ import type { GameEvent } from '../../types/events';
 
 export const CAREER_EVENTS: readonly GameEvent[] = [
   // ───────────────────────────────────────────────────────────────────────
+  // DIRECTION COMMITMENT — fires once, immediately after the foundation→
+  // career phase overlay clears. Priority 6 so it wins the priority beat
+  // ahead of every other career event. The accumulated leaning_* flag is
+  // surfaced as context by EventCard; choices still set whichever direction
+  // the player wants — leaning is a hint, not a lock (§9). Each option's
+  // setsDirection writes player.direction, which becomes the source of
+  // truth for the figure outfit going forward.
+  // ───────────────────────────────────────────────────────────────────────
+
+  {
+    id: 'choose_direction',
+    title: 'Pick a Direction',
+    category: 'career',
+    phase: 'career',
+    art: 'event_whats_next',
+    priority: 6,
+    conditions: {
+      phase: 'career',
+      minAge: 22,
+    },
+    fallbackText:
+      "Foundation's closed. The next ten years take their shape from the arc you commit to now. Your past has tilted you somewhere — but the choice is still yours.",
+    choices: [
+      {
+        id: 'commit_corporate',
+        label: 'Commit to the corporate ladder',
+        effects: { discipline: 4, ambition: 3, riskTolerance: -2 },
+        setsDirection: 'corporate',
+        resultText:
+          'You commit to the ladder. Title, package, brand — the path is well-lit.',
+      },
+      {
+        id: 'commit_founder',
+        label: "Commit to building your own",
+        effects: { ambition: 5, riskTolerance: 5, stress: 3 },
+        setsDirection: 'founder',
+        resultText:
+          "You commit to building. The path is dim; the ceiling isn't drawn.",
+      },
+      {
+        id: 'commit_freelancer',
+        label: 'Commit to independent / small-shop',
+        effects: { discipline: 3, riskTolerance: 3, network: 2 },
+        setsDirection: 'freelancer',
+        resultText:
+          'You commit to independence. You trade ceiling for control.',
+      },
+    ],
+    tags: ['direction', 'identity', 'commitment'],
+  },
+
+  // ───────────────────────────────────────────────────────────────────────
   // UNIVERSAL CORE — reachable for any leaning; the spine of the chapter.
   // ───────────────────────────────────────────────────────────────────────
 

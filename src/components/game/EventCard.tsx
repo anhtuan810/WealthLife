@@ -8,6 +8,7 @@ import Animated, {
 } from 'react-native-reanimated';
 import { LinearGradient } from 'expo-linear-gradient';
 import { colors, radii, spacing, typography } from '../../theme';
+import type { LifeDirection } from '../../game/player';
 import type { GameEvent } from '../../types/events';
 import { ArtSlot } from '../visual/ArtSlot';
 import { ChoiceButton } from './ChoiceButton';
@@ -15,12 +16,16 @@ import { ChoiceButton } from './ChoiceButton';
 type Props = {
   event: GameEvent;
   onChoose: (choiceId: string) => void;
+  // Soft direction signal from accumulated leaning_* flags. When a choice's
+  // setsDirection matches this, the card highlights it as "your leaning" —
+  // context only, the player can still pick anything.
+  leaning?: LifeDirection;
 };
 
 // Full-screen decision overlay. Mounted at HomeScreen level so the backdrop
 // covers everything (including AmbientGlow and the dashboard header padding).
 // MVP: deterministic event.fallbackText only — AI narrative is FUTURE (§19).
-export function EventCard({ event, onChoose }: Props) {
+export function EventCard({ event, onChoose, leaning }: Props) {
   const v = useSharedValue(0);
 
   useEffect(() => {
@@ -63,6 +68,9 @@ export function EventCard({ event, onChoose }: Props) {
                   key={c.id}
                   label={c.label}
                   onPress={() => onChoose(c.id)}
+                  aligned={
+                    !!leaning && c.setsDirection === leaning
+                  }
                 />
               ))}
             </View>

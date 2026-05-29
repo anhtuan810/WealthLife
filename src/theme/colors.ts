@@ -26,6 +26,7 @@ export const colors = {
   positive: '#7BD389',
   negative: '#E27272',
   pressure: '#E2A572',
+  warmDebt: '#D99B6A',
 
   emerald: '#2EC07A',
   emeraldBright: '#5BE0A0',

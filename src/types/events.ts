@@ -2,7 +2,7 @@
 // The engine is a dumb interpreter over these types; intelligence lives in data.
 
 import type { FoundationPathId } from '../data/foundationPaths';
-import type { Phase } from '../game/player';
+import type { LifeDirection, Phase } from '../game/player';
 
 // Numeric Player fields that an event Choice can read/write as deltas.
 // Keep this union flat — it doubles as both effect keys and stat-threshold keys.
@@ -48,6 +48,10 @@ export type Choice = {
   label: string;
   effects: Partial<Record<StatKey, number>>;
   setsFlags?: string[];
+  // Commits the player to a direction (corporate / founder / freelancer).
+  // Used by the choose_direction beat; treated as the source of truth for
+  // anything reading "what arc is the player on" — see Player.direction.
+  setsDirection?: Exclude<LifeDirection, null>;
   resultText?: string;
 };
 

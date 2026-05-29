@@ -7,6 +7,13 @@ import {
 // shape of strengths + flags, narrated at run-end.
 export type Phase = 'foundation' | 'career' | 'growth' | 'freedom';
 
+// First-class direction commitment, written by the choose_direction beat at
+// the foundation→career transition. Null until the player commits. Anything
+// rendering "what arc is this person on" should prefer player.direction once
+// set; pre-choice they can still fall back to leaning_* flags as a soft
+// signal of where the past has tilted.
+export type LifeDirection = 'corporate' | 'founder' | 'freelancer' | null;
+
 export type Player = {
   age: number;
   month: number;
@@ -38,10 +45,21 @@ export type Player = {
   flags: string[];
   firedEventIds: string[];
 
+  // Committed direction (set by the choose_direction beat). Null until the
+  // player commits; downstream readers should fall back to flag-derived
+  // leaning while this is null.
+  direction: LifeDirection;
+
   // Engine-internal: continuous accumulator that nudges discrete stress.
   stressMomentum: number;
   // One entry per recorded month, including run start.
   netWorthHistory: number[];
+
+  // Projected monthly cash flow captured at the most recent tick — used by
+  // the dashboard to show a ↑/↓ trend cue against the current projection.
+  // Undefined for a fresh player (before any month has been advanced) so the
+  // arrow is suppressed on month 0.
+  lastProjectedFlow?: number;
 };
 
 export function createPlayer(pathId: FoundationPathId): Player {
@@ -75,6 +93,7 @@ export function createPlayer(pathId: FoundationPathId): Player {
 
     flags: [],
     firedEventIds: [],
+    direction: null,
 
     stressMomentum: 0,
     netWorthHistory: [startingNetWorth],
@@ -94,6 +113,19 @@ export const STRENGTH_FIELDS: ReadonlyArray<{
   { key: 'riskTolerance', label: 'RISK' },
   { key: 'ambition', label: 'AMBITION' },
 ];
+
+// Soft-signal direction inferred from leaning_* flags accumulated through
+// foundation. Used as a HINT (e.g. "your past has tilted toward founder") in
+// the choose_direction beat before the player has a committed direction, and
+// as a fallback for the figure outfit while player.direction is still null.
+export function leaningFromFlags(
+  flags: readonly string[],
+): LifeDirection {
+  if (flags.includes('leaning_corporate')) return 'corporate';
+  if (flags.includes('leaning_founder')) return 'founder';
+  if (flags.includes('leaning_independent')) return 'freelancer';
+  return null;
+}
 
 export const netWorth = (p: Player): number =>
   p.cash + p.assets + p.investments - p.debt;

@@ -12,11 +12,16 @@ import { colors, radii, spacing, typography } from '../../theme';
 type Props = {
   label: string;
   onPress: () => void;
+  // When true, the button gets a gold "Your leaning" badge + a softly tinted
+  // border to surface that this option lines up with the player's past
+  // direction signal. Doesn't change behavior — the player can still pick
+  // any other option.
+  aligned?: boolean;
 };
 
 // Secondary-style decision button — quieter than PrimaryButton so the event
 // itself remains the focus. Stacks 2–4 per EventCard.
-export function ChoiceButton({ label, onPress }: Props) {
+export function ChoiceButton({ label, onPress, aligned }: Props) {
   const press = useSharedValue(0);
 
   const wrapStyle = useAnimatedStyle(() => ({
@@ -37,9 +42,14 @@ export function ChoiceButton({ label, onPress }: Props) {
         onPress();
       }}
     >
-      <Animated.View style={[styles.wrap, wrapStyle]}>
+      <Animated.View style={[styles.wrap, aligned && styles.wrapAligned, wrapStyle]}>
         <View style={styles.body}>
-          <Text style={styles.label}>{label}</Text>
+          <View style={styles.labelCol}>
+            <Text style={styles.label}>{label}</Text>
+            {aligned && (
+              <Text style={styles.alignedHint}>YOUR LEANING</Text>
+            )}
+          </View>
           <Text style={styles.chev}>›</Text>
         </View>
       </Animated.View>
@@ -54,6 +64,10 @@ const styles = StyleSheet.create({
     borderColor: colors.border,
     backgroundColor: colors.surfaceElev,
   },
+  wrapAligned: {
+    borderColor: colors.accent,
+    backgroundColor: colors.accentSoft,
+  },
   body: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -62,10 +76,19 @@ const styles = StyleSheet.create({
     paddingVertical: spacing.md + 2,
     gap: spacing.md,
   },
+  labelCol: {
+    flex: 1,
+    gap: 2,
+  },
   label: {
     ...typography.body,
     color: colors.textPrimary,
-    flex: 1,
+  },
+  alignedHint: {
+    ...typography.caption,
+    color: colors.accent,
+    fontSize: 10,
+    letterSpacing: 1.8,
   },
   chev: {
     ...typography.title,

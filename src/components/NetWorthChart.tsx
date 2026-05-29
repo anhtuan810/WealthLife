@@ -11,7 +11,12 @@ import {
 } from '@shopify/react-native-skia';
 import { colors } from '../theme';
 
-type Props = { history: number[] };
+type Props = {
+  history: number[];
+  // Trend-only mode for the dashboard sparkline: drops the endpoint dot so
+  // there's no value-marker on the line, leaving just the curve.
+  compact?: boolean;
+};
 
 const PAD_X = 6;
 const PAD_TOP = 10;
@@ -19,7 +24,7 @@ const PAD_BOTTOM = 6;
 // Cardinal-spline tension. Lower = gentler curves, higher = more wavy.
 const SMOOTHING = 0.18;
 
-export function NetWorthChart({ history }: Props) {
+export function NetWorthChart({ history, compact = false }: Props) {
   const [size, setSize] = useState<{ w: number; h: number } | null>(null);
 
   const onLayout = (e: LayoutChangeEvent) => {
@@ -78,22 +83,27 @@ export function NetWorthChart({ history }: Props) {
             color={colors.emeraldBright}
           />
 
-          {/* Glowing dot at latest point */}
-          <Circle
-            cx={geom.last.x}
-            cy={geom.last.y}
-            r={7}
-            color={colors.emerald}
-            opacity={0.55}
-          >
-            <BlurMask blur={6} style="solid" />
-          </Circle>
-          <Circle
-            cx={geom.last.x}
-            cy={geom.last.y}
-            r={3}
-            color={colors.emeraldBright}
-          />
+          {/* Glowing dot at latest point — suppressed in compact mode so the
+              sparkline reads as a pure trend without a value marker. */}
+          {!compact && (
+            <>
+              <Circle
+                cx={geom.last.x}
+                cy={geom.last.y}
+                r={7}
+                color={colors.emerald}
+                opacity={0.55}
+              >
+                <BlurMask blur={6} style="solid" />
+              </Circle>
+              <Circle
+                cx={geom.last.x}
+                cy={geom.last.y}
+                r={3}
+                color={colors.emeraldBright}
+              />
+            </>
+          )}
         </Canvas>
       )}
     </View>

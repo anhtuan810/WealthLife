@@ -1,3 +1,4 @@
+import { projectedCashFlow } from './cashFlow';
 import { freedomPct, type Player } from './player';
 import { TICK_CONFIG } from './playerConfig';
 
@@ -9,6 +10,13 @@ import { TICK_CONFIG } from './playerConfig';
 // system (§10) will wrap this in a later prompt — keep field names in sync with §27.
 export function tick(p: Player): Player {
   const cfg = TICK_CONFIG;
+
+  // 0. Snapshot the projection for the month being closed, using the same
+  //    helper the dashboard reads. The next month's dashboard compares its
+  //    fresh projection against this value to draw the ↑/↓ cue. Captured
+  //    before any tick mutations so it reflects exactly what was shown to
+  //    the player when they pressed Next Month.
+  const lastProjectedFlow = projectedCashFlow(p);
 
   // 1. Time
   const month = p.month + 1;
@@ -98,6 +106,7 @@ export function tick(p: Player): Player {
     stress,
     stressMomentum: momentum,
     netWorthHistory,
+    lastProjectedFlow,
   };
 
   return next;

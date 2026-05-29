@@ -92,8 +92,6 @@ export function FreedomMeter({ value, pulse: pulseSignal }: Props) {
           <View style={styles.fillHighlight} />
         </Animated.View>
       </View>
-
-      <Text style={styles.footnote}>The slow climb to your runway.</Text>
     </View>
   );
 }
@@ -151,10 +149,5 @@ const styles = StyleSheet.create({
     height: 2,
     borderRadius: 1,
     backgroundColor: 'rgba(255, 255, 255, 0.28)',
-  },
-  footnote: {
-    ...typography.caption,
-    color: colors.textMuted,
-    letterSpacing: 1.6,
   },
 });
