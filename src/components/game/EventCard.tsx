@@ -1,5 +1,5 @@
 import React, { useEffect } from 'react';
-import { ScrollView, StyleSheet, Text, View } from 'react-native';
+import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import Animated, {
   Easing,
   useAnimatedStyle,
@@ -8,8 +8,10 @@ import Animated, {
 } from 'react-native-reanimated';
 import { LinearGradient } from 'expo-linear-gradient';
 import { colors, radii, spacing, typography } from '../../theme';
+import { PENDING_DECISIONS_CAP } from '../../data/constants';
 import type { LifeDirection } from '../../game/player';
 import type { GameEvent } from '../../types/events';
+import { effectiveDeferWindow } from '../../types/events';
 import { ArtSlot, CATEGORY_TINT } from '../visual/ArtSlot';
 import { ChoiceButton } from './ChoiceButton';
 import { glyphForEffects } from './choiceIcon';
@@ -17,6 +19,12 @@ import { glyphForEffects } from './choiceIcon';
 type Props = {
   event: GameEvent;
   onChoose: (choiceId: string) => void;
+  // Park the decision without applying effects. Only invoked when the event's
+  // effective defer window is > 0. Absent → "Decide later" is hidden.
+  onDefer?: (eventId: string) => void;
+  // Number of decisions already parked. When at the cap, "Decide later" is
+  // replaced with a subdued note so the absence reads as intentional.
+  pendingCount?: number;
   // Soft direction signal from accumulated leaning_* flags. When a choice's
   // setsDirection matches this, the card highlights it as "your leaning" —
   // context only, the player can still pick anything.
@@ -26,7 +34,20 @@ type Props = {
 // Full-screen decision overlay. Mounted at HomeScreen level so the backdrop
 // covers everything (including AmbientGlow and the dashboard header padding).
 // MVP: deterministic event.fallbackText only — AI narrative is FUTURE (§19).
-export function EventCard({ event, onChoose, leaning }: Props) {
+export function EventCard({
+  event,
+  onChoose,
+  onDefer,
+  pendingCount = 0,
+  leaning,
+}: Props) {
+  const isDeferrable = effectiveDeferWindow(event) > 0 && !!onDefer;
+  const atCap = pendingCount >= PENDING_DECISIONS_CAP;
+  const canDefer = isDeferrable && !atCap;
+  // Show the "already parked" note only when the event WOULD be deferrable —
+  // otherwise we'd render an explanation for an affordance that was never on
+  // offer for this decision.
+  const showAtCapNote = isDeferrable && atCap;
   const v = useSharedValue(0);
 
   useEffect(() => {
@@ -84,6 +105,23 @@ export function EventCard({ event, onChoose, leaning }: Props) {
                 />
               ))}
             </View>
+
+            {canDefer ? (
+              <Pressable
+                onPress={() => onDefer?.(event.id)}
+                hitSlop={8}
+                style={({ pressed }) => [
+                  styles.deferButton,
+                  pressed && styles.deferButtonPressed,
+                ]}
+              >
+                <Text style={styles.deferLabel}>Decide later</Text>
+              </Pressable>
+            ) : showAtCapNote ? (
+              <Text style={styles.deferNote}>
+                {PENDING_DECISIONS_CAP} decisions already parked
+              </Text>
+            ) : null}
           </View>
         </Animated.View>
       </View>
@@ -139,5 +177,33 @@ const styles = StyleSheet.create({
   choices: {
     gap: spacing.sm,
     marginTop: spacing.xs,
+  },
+  deferButton: {
+    alignSelf: 'center',
+    paddingVertical: spacing.xs,
+    paddingHorizontal: spacing.sm,
+  },
+  deferButtonPressed: {
+    opacity: 0.5,
+  },
+  deferLabel: {
+    ...typography.body,
+    color: colors.textSecondary,
+    opacity: 0.7,
+    fontSize: 13,
+    letterSpacing: 0.3,
+  },
+  // Plain text — NOT a button. Mirrors deferLabel's subdued-but-readable
+  // treatment (textSecondary + opacity, NOT textFaint, which is unreadable).
+  // Centered so it visually replaces the "Decide later" button rather than
+  // mimicking its press shape.
+  deferNote: {
+    ...typography.body,
+    color: colors.textSecondary,
+    opacity: 0.7,
+    fontSize: 13,
+    letterSpacing: 0.3,
+    textAlign: 'center',
+    paddingVertical: spacing.xs,
   },
 });

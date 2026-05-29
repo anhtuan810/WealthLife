@@ -52,6 +52,7 @@ export const CAREER_EVENTS: readonly GameEvent[] = [
     title: 'Pick a Direction',
     category: 'career',
     phase: 'career',
+    deferWindow: 0,
     art: 'event_whats_next',
     priority: 6,
     conditions: {
@@ -98,6 +99,7 @@ export const CAREER_EVENTS: readonly GameEvent[] = [
     title: 'Performance Review',
     category: 'career',
     phase: 'career',
+    deferWindow: 1,
     art: 'event_promotion_review',
     conditions: {
       minAge: 22,
@@ -367,6 +369,7 @@ export const CAREER_EVENTS: readonly GameEvent[] = [
     title: 'The Wheels Come Off',
     category: 'career',
     phase: 'career',
+    deferWindow: 0,
     art: 'event_burnout_recovery_event',
     priority: 5,
     conditions: {

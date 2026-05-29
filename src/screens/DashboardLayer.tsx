@@ -30,7 +30,10 @@ import { freedomPct, leaningFromFlags, netWorth, type Player } from '../game/pla
 import { useGameStore } from '../state/gameStore';
 import { CashFlowDetail } from './dashboard/CashFlowDetail';
 import { DebtDetail } from './dashboard/DebtDetail';
+import { DetailSheet } from './dashboard/DetailSheet';
 import { projectedCashFlow } from '../game/cashFlow';
+import { ALL_EVENTS } from '../content';
+import { PENDING_DECISIONS_CAP } from '../data/constants';
 
 const fmtMoney = (n: number) => {
   const sign = n < 0 ? '-' : '';
@@ -81,10 +84,14 @@ export function DashboardLayer() {
   const advanceMonth = useGameStore((s) => s.advanceMonth);
   const skipToNextDecision = useGameStore((s) => s.skipToNextDecision);
   const currentEvent = useGameStore((s) => s.currentEvent);
+  const openPendingDecision = useGameStore((s) => s.openPendingDecision);
 
   // Which money-row detail sheet is open. Null = none. Local state on the
   // dashboard since these views are informational, not part of game flow.
   const [sheet, setSheet] = useState<'cashflow' | 'debt' | null>(null);
+  // Pending-decisions tray. Local UI state; the list itself lives on the
+  // player. Closed by tapping the backdrop, the close glyph, or any entry.
+  const [pendingOpen, setPendingOpen] = useState(false);
 
   // Transient milestone beat for <LifeFigure>. We watch month advances here
   // (engine layer would also work, but the dashboard is the consumer) and
@@ -161,6 +168,24 @@ export function DashboardLayer() {
   const debt = Math.max(0, Math.round(player.debt));
   const hasDebt = debt > 0;
 
+  // Pending-decisions tray data. Resolves each parked id to its event title
+  // (intentionally no per-row countdown — urgency is signalled by the pill's
+  // urgent treatment instead). Capped so the list never grows unbounded.
+  const pendingItems = player.pendingDecisions
+    .slice(0, PENDING_DECISIONS_CAP)
+    .map((p) => {
+      const event = ALL_EVENTS.find((e) => e.id === p.eventId);
+      return event ? { eventId: p.eventId, title: event.title } : null;
+    })
+    .filter((x): x is { eventId: string; title: string } => x !== null);
+  const pendingCount = pendingItems.length;
+  // Urgent = at least one parked decision lapses this month or next. The pill
+  // escalates its tint in this state; we deliberately don't introduce a new
+  // ambient line for the nudge.
+  const anyUrgent = player.pendingDecisions.some(
+    (d) => d.expiryMonth - player.month <= 1,
+  );
+
   // ↑/↓ vs last month's projection. Suppressed when there's no prior value
   // (fresh player, before any month advance) or the rounded delta is zero so
   // the user never sees an arrow that doesn't match a visible number change.
@@ -181,9 +206,14 @@ export function DashboardLayer() {
         showsVerticalScrollIndicator={false}
       >
         <View style={styles.header}>
+          {/* Drop the trailing phase segment when the pill is on screen — the
+              path title below already names the phase, so this is the only
+              redundant element and trimming it removes the collision at the
+              source instead of padding around it. */}
           <Text style={styles.eyebrow} numberOfLines={1}>
-            AGE {player.age} · MONTH {player.month} ·{' '}
-            {player.phase.toUpperCase()}
+            {pendingCount > 0
+              ? `AGE ${player.age} · MONTH ${player.month}`
+              : `AGE ${player.age} · MONTH ${player.month} · ${player.phase.toUpperCase()}`}
           </Text>
           <Text style={styles.title} numberOfLines={2}>
             {path.title}
@@ -292,6 +322,17 @@ export function DashboardLayer() {
         <SkipLink disabled={advanceDisabled} onPress={skipToNextDecision} />
       </View>
 
+      {/* Pending-decisions pill. Absolute so it doesn't add header padding;
+          only renders when the player has parked decisions. The header above
+          has paddingRight reserved so its eyebrow text can't slide under it. */}
+      {pendingCount > 0 ? (
+        <PendingPill
+          count={pendingCount}
+          urgent={anyUrgent}
+          onPress={() => setPendingOpen(true)}
+        />
+      ) : null}
+
       {/* Detail sheets sit above the scroll content but inside the dashboard
           frame. They render nothing when closed, and dismiss on backdrop tap
           or close button. */}
@@ -305,7 +346,100 @@ export function DashboardLayer() {
         visible={sheet === 'debt'}
         onClose={() => setSheet(null)}
       />
+
+      <DetailSheet
+        visible={pendingOpen}
+        onClose={() => setPendingOpen(false)}
+        eyebrow="PARKED"
+        title="Pending decisions"
+      >
+        <View style={styles.pendingList}>
+          {pendingItems.map((item) => (
+            <Pressable
+              key={item.eventId}
+              onPress={() => {
+                Haptics.selectionAsync();
+                setPendingOpen(false);
+                openPendingDecision(item.eventId);
+              }}
+              hitSlop={6}
+              style={({ pressed }) => [
+                styles.pendingRow,
+                pressed && styles.pendingRowPressed,
+              ]}
+            >
+              <Text style={styles.pendingRowTitle} numberOfLines={2}>
+                {item.title}
+              </Text>
+              <Text style={styles.pendingRowChevron}>›</Text>
+            </Pressable>
+          ))}
+        </View>
+      </DetailSheet>
     </View>
+  );
+}
+
+// Small count badge in the top-right corner. Low emphasis — surface color +
+// hairline border, no chrome — so it never competes with the path title. Sits
+// above the scroll so it stays visible as the user scrolls. When `urgent` is
+// set (at least one parked decision lapses this month or next) the pill
+// escalates to a warm/gold tint to act as the nudge — no separate surface.
+function PendingPill({
+  count,
+  urgent,
+  onPress,
+}: {
+  count: number;
+  urgent: boolean;
+  onPress: () => void;
+}) {
+  // Glyph + label color tracks state so both update in lockstep; the badge
+  // inverts on urgent for a strong color shift, not just a fill swap.
+  const accentTone = urgent ? colors.accentBright : colors.accent;
+  return (
+    <Pressable
+      onPress={() => {
+        Haptics.selectionAsync();
+        onPress();
+      }}
+      hitSlop={8}
+      style={({ pressed }) => [
+        styles.pendingPill,
+        urgent && styles.pendingPillUrgent,
+        pressed && styles.pendingPillPressed,
+      ]}
+      accessibilityLabel={
+        urgent
+          ? `${count} pending decision${count === 1 ? '' : 's'}, one lapses soon`
+          : `${count} pending decision${count === 1 ? '' : 's'}`
+      }
+    >
+      <StatGlyph name="clock" size={12} color={accentTone} />
+      <Text
+        style={[
+          styles.pendingPillLabel,
+          urgent && styles.pendingPillLabelUrgent,
+        ]}
+      >
+        PARKED
+      </Text>
+      <View
+        style={[
+          styles.pendingPillCountWrap,
+          urgent && styles.pendingPillCountWrapUrgent,
+        ]}
+      >
+        <Text
+          style={[
+            styles.pendingPillCount,
+            urgent && styles.pendingPillCountUrgent,
+          ]}
+        >
+          {count}
+        </Text>
+      </View>
+    </Pressable>
   );
 }
 
@@ -723,5 +857,100 @@ const styles = StyleSheet.create({
   },
   skipTextDisabled: {
     color: colors.textFaint,
+  },
+  // Calm but legible: dark surface tile with a 1px accent border, gold glyph
+  // and label, and a count badge filled with low-alpha accent so the number
+  // reads as a chip-within-a-chip. Stays clearly secondary to the gold
+  // "Next Month" CTA — no solid-gold fill on the chip body.
+  pendingPill: {
+    position: 'absolute',
+    top: 0,
+    right: 0,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    paddingVertical: 6,
+    paddingLeft: 9,
+    paddingRight: 6,
+    borderRadius: radii.md,
+    borderWidth: 1,
+    borderColor: colors.accent,
+    backgroundColor: 'rgba(20, 23, 28, 0.72)',
+  },
+  // Urgent = at least one parked decision lapses this month or next. Flips
+  // to a soft-accent fill + brighter border so it reads as escalation, not a
+  // new surface. Count badge fully inverts below for the strongest contrast.
+  pendingPillUrgent: {
+    borderColor: colors.accentBright,
+    backgroundColor: colors.accentSoft,
+  },
+  pendingPillPressed: {
+    opacity: 0.6,
+  },
+  pendingPillLabel: {
+    ...typography.caption,
+    color: colors.accent,
+    fontSize: 10,
+    letterSpacing: 1.6,
+    fontWeight: '700',
+  },
+  pendingPillLabelUrgent: {
+    color: colors.accentBright,
+  },
+  // Filled badge — accentSoft tile with gold numeric so the count reads at a
+  // glance without flipping the whole chip to gold.
+  pendingPillCountWrap: {
+    minWidth: 18,
+    paddingHorizontal: 5,
+    height: 18,
+    borderRadius: 9,
+    backgroundColor: colors.accentSoft,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  // Urgent inverts: solid bright-accent fill with dark text — the visual
+  // payoff that distinguishes urgent from the calm non-urgent state now that
+  // non-urgent itself reads more present than before.
+  pendingPillCountWrapUrgent: {
+    backgroundColor: colors.accentBright,
+  },
+  pendingPillCount: {
+    ...typography.statSmall,
+    color: colors.accent,
+    fontSize: 12,
+    lineHeight: 13,
+    fontWeight: '700',
+  },
+  pendingPillCountUrgent: {
+    color: colors.bg,
+  },
+  pendingList: {
+    gap: spacing.xs,
+  },
+  pendingRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    gap: spacing.sm,
+    paddingVertical: spacing.sm,
+    paddingHorizontal: spacing.sm,
+    borderRadius: radii.md,
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: colors.borderSoft,
+    backgroundColor: 'rgba(20, 23, 28, 0.4)',
+  },
+  pendingRowPressed: {
+    opacity: 0.6,
+  },
+  pendingRowTitle: {
+    ...typography.body,
+    color: colors.textPrimary,
+    fontSize: 15,
+    flexShrink: 1,
+  },
+  pendingRowChevron: {
+    color: colors.textFaint,
+    fontSize: 18,
+    lineHeight: 18,
   },
 });

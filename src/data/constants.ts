@@ -18,3 +18,8 @@ export const DIRECTIONAL_FLAGS = [
   'leaning_independent',
   'undecided',
 ] as const;
+
+// Max parked decisions a player can carry at once. Enforced at the source
+// (EventCard's "Decide later" affordance + the deferDecision store action),
+// not just on display, so a 4th decision can never be silently parked.
+export const PENDING_DECISIONS_CAP = 3;

@@ -77,8 +77,10 @@ export function getEligibleEvents(
   player: Player,
   all: readonly GameEvent[],
 ): GameEvent[] {
+  const parkedIds = new Set(player.pendingDecisions.map((p) => p.eventId));
   return all.filter((e) => {
     if (!e.repeatable && player.firedEventIds.includes(e.id)) return false;
+    if (parkedIds.has(e.id)) return false;
     return evaluateConditions(player, e.conditions);
   });
 }

@@ -35,6 +35,15 @@ export const FOUNDATION_EVENTS: readonly GameEvent[] = [
     title: 'First Tuition Bill',
     category: 'foundation',
     phase: 'foundation',
+    deferWindow: 2,
+    // Lapse: the unpaid balance the comply choice (take_loan, +6000 debt) would
+    // have financed, plus a 15% late fee → +6900 debt.
+    onLapse: {
+      effects: { debt: 6900, stress: 4 },
+      setsFlags: ['missed_tuition'],
+      resultText:
+        'You let the tuition deadline slide — the unpaid balance, plus a late fee, was added to your debt.',
+    },
     art: 'event_first_tuition_bill',
     conditions: {
       minAge: 18,
@@ -78,6 +87,7 @@ export const FOUNDATION_EVENTS: readonly GameEvent[] = [
     title: 'Scholarship Letter',
     category: 'foundation',
     phase: 'foundation',
+    deferWindow: 2,
     art: 'event_scholarship_offer',
     conditions: {
       minAge: 18,
@@ -119,6 +129,7 @@ export const FOUNDATION_EVENTS: readonly GameEvent[] = [
     title: 'Major Declaration',
     category: 'foundation',
     phase: 'foundation',
+    deferWindow: 0,
     art: 'event_major_choice',
     conditions: {
       minAge: 18,
@@ -406,6 +417,7 @@ export const FOUNDATION_EVENTS: readonly GameEvent[] = [
     title: 'Side Project Window',
     category: 'foundation',
     phase: 'foundation',
+    deferWindow: 1,
     art: 'event_side_project_window',
     conditions: { minAge: 18, maxAge: 22, phase: 'foundation' },
     fallbackText:
@@ -569,6 +581,7 @@ export const FOUNDATION_EVENTS: readonly GameEvent[] = [
     title: 'Industry Mixer',
     category: 'foundation',
     phase: 'foundation',
+    deferWindow: 0,
     art: 'event_networking_event',
     conditions: { minAge: 19, maxAge: 21, phase: 'foundation' },
     fallbackText:
@@ -720,6 +733,15 @@ export const FOUNDATION_EVENTS: readonly GameEvent[] = [
     title: 'Repayment Schedule',
     category: 'foundation',
     phase: 'foundation',
+    deferWindow: 2,
+    // Lapse: 10% penalty on the scheduled repayment the comply choice
+    // (start_paying_now, -1500 cash → -1500 debt) targets → +150 debt.
+    onLapse: {
+      effects: { debt: 150, stress: 4 },
+      setsFlags: ['missed_loan_payment'],
+      resultText:
+        'You skipped the repayment. A penalty was tacked onto what you owe.',
+    },
     art: 'event_loan_repayment_notice',
     conditions: {
       minAge: 19,
@@ -1095,6 +1117,13 @@ export const FOUNDATION_EVENTS: readonly GameEvent[] = [
     title: 'The Body Sends a Note',
     category: 'foundation',
     phase: 'foundation',
+    // Lapse: ignoring the body's note pushes stress further, no money impact.
+    onLapse: {
+      effects: { stress: 10 },
+      setsFlags: ['ignored_burnout_warning'],
+      resultText:
+        'You ignored the warning signs. The pressure kept building.',
+    },
     art: 'event_burnout_warning',
     conditions: {
       minAge: 20,
@@ -1139,6 +1168,7 @@ export const FOUNDATION_EVENTS: readonly GameEvent[] = [
     title: 'Walk Away From the Degree',
     category: 'foundation',
     phase: 'foundation',
+    deferWindow: 0,
     art: 'event_drop_out_decision',
     conditions: {
       minAge: 20,
@@ -1223,6 +1253,7 @@ export const FOUNDATION_EVENTS: readonly GameEvent[] = [
     title: 'A Sharp Dip',
     category: 'foundation',
     phase: 'foundation',
+    deferWindow: 1,
     art: 'event_market_dip_buy',
     conditions: {
       minAge: 21,
@@ -1263,6 +1294,7 @@ export const FOUNDATION_EVENTS: readonly GameEvent[] = [
     title: 'End of the Foundation',
     category: 'foundation',
     phase: 'foundation',
+    deferWindow: 0,
     art: 'event_whats_next',
     conditions: { minAge: 22, maxAge: 22, phase: 'foundation' },
     priority: 3, // late-foundation directional event should fire when eligible

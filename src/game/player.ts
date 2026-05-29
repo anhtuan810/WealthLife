@@ -55,6 +55,11 @@ export type Player = {
   // One entry per recorded month, including run start.
   netWorthHistory: number[];
 
+  // Decisions the player tapped "Decide later" on. They sit inert here until
+  // expiry/reopen logic lands in a follow-up; the engine just suppresses these
+  // ids from new event picks so a parked decision can't be re-presented fresh.
+  pendingDecisions: { eventId: string; parkedMonth: number; expiryMonth: number }[];
+
   // Projected monthly cash flow captured at the most recent tick — used by
   // the dashboard to show a ↑/↓ trend cue against the current projection.
   // Undefined for a fresh player (before any month has been advanced) so the
@@ -97,6 +102,8 @@ export function createPlayer(pathId: FoundationPathId): Player {
 
     stressMomentum: 0,
     netWorthHistory: [startingNetWorth],
+
+    pendingDecisions: [],
   };
 }
 
@@ -108,7 +115,7 @@ export const STRENGTH_FIELDS: ReadonlyArray<{
 }> = [
   { key: 'skill', label: 'SKILL' },
   { key: 'network', label: 'NETWORK' },
-  { key: 'reputation', label: 'REP' },
+  { key: 'reputation', label: 'REPUTATION' },
   { key: 'discipline', label: 'DISCIPLINE' },
   { key: 'riskTolerance', label: 'RISK' },
   { key: 'ambition', label: 'AMBITION' },

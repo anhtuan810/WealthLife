@@ -14,6 +14,7 @@ import { HeroBackdrop } from '../components/visual/HeroBackdrop';
 import { PrimaryButton } from '../components/PrimaryButton';
 import { FoundationPathCard } from '../components/FoundationPathCard';
 import { EventCard } from '../components/game/EventCard';
+import { LapsedOverlay } from '../components/game/LapsedOverlay';
 import { PhaseTransitionOverlay } from '../components/game/PhaseTransitionOverlay';
 import { DashboardLayer } from './DashboardLayer';
 import { RunSummaryScreen } from './RunSummaryScreen';
@@ -34,13 +35,27 @@ export function HomeScreen() {
   const startGame = useGameStore((s) => s.startGame);
   const currentEvent = useGameStore((s) => s.currentEvent);
   const chooseOption = useGameStore((s) => s.chooseOption);
+  const deferDecision = useGameStore((s) => s.deferDecision);
   const gameOver = useGameStore((s) => s.gameOver);
   const phaseTransition = useGameStore((s) => s.phaseTransition);
   const dismissPhaseTransition = useGameStore((s) => s.dismissPhaseTransition);
+  const lapsedThisStep = useGameStore((s) => s.lapsedThisStep);
+  const dismissLapses = useGameStore((s) => s.dismissLapses);
 
   const enter = useSharedValue(0);
   const stageV = useSharedValue(0);
   const continueV = useSharedValue(0);
+
+  // A lapse step CAN produce only silent-vanish entries (opportunities with
+  // no resultText). When that happens there's nothing to show; the overlay
+  // must not block the EventCard/PhaseTransition that may also be queued, so
+  // we auto-clear lapsedThisStep on next tick.
+  const hasVisibleLapses = lapsedThisStep.some((l) => !!l.resultText);
+  const hasSilentOnlyLapses =
+    lapsedThisStep.length > 0 && !hasVisibleLapses;
+  useEffect(() => {
+    if (hasSilentOnlyLapses) dismissLapses();
+  }, [hasSilentOnlyLapses, dismissLapses]);
 
   useEffect(() => {
     enter.value = withDelay(
@@ -203,13 +218,30 @@ export function HomeScreen() {
           ) : null}
         </Animated.View>
 
+        {/* Lapse ack — read-only acknowledgment of any parked decisions that
+            expired during the last advance/skip. Mounted BEFORE the decision
+            and phase-transition overlays so a skip that ended on a decision
+            shows the lapse first; once dismissed, lapsedThisStep clears and
+            those overlays take their normal turn. */}
+        {stage === 'dashboard' && hasVisibleLapses && !gameOver ? (
+          <LapsedOverlay lapsed={lapsedThisStep} onDismiss={dismissLapses} />
+        ) : null}
+
         {/* Decision overlay — rendered at root so the backdrop covers the
             full screen, escaping the dashLayer's padding. Suppressed once
-            the run ends so it can't appear behind the summary. */}
-        {stage === 'dashboard' && currentEvent && !gameOver ? (
+            the run ends so it can't appear behind the summary. Also held
+            back while a lapse ack is up. */}
+        {stage === 'dashboard' &&
+        currentEvent &&
+        !gameOver &&
+        !hasVisibleLapses ? (
           <EventCard
             event={currentEvent}
             onChoose={chooseOption}
+            onDefer={deferDecision}
+            // EventCard hides "Decide later" when the player is at the parked
+            // decisions cap so a 4th can't be silently parked.
+            pendingCount={player ? player.pendingDecisions.length : 0}
             // Surface the player's accumulated leaning so the direction
             // beat can highlight the aligned option as context.
             leaning={player ? leaningFromFlags(player.flags) : null}
@@ -218,8 +250,11 @@ export function HomeScreen() {
 
         {/* Phase-transition ack — rendered after EventCard so it sits on top
             if both ever coexist. The store guarantees they don't, but the
-            stacking is still correct. */}
-        {stage === 'dashboard' && phaseTransition && !gameOver ? (
+            stacking is still correct. Also held back while a lapse ack is up. */}
+        {stage === 'dashboard' &&
+        phaseTransition &&
+        !gameOver &&
+        !hasVisibleLapses ? (
           <PhaseTransitionOverlay
             phase={phaseTransition}
             onDismiss={dismissPhaseTransition}

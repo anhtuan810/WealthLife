@@ -351,6 +351,7 @@ function snapshotToPlayer(snap: EndStateSnapshot): Player {
     direction: null,
     stressMomentum: 0,
     netWorthHistory: [],
+    pendingDecisions: [],
   };
 }
 

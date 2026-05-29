@@ -67,8 +67,11 @@ export function FoundationPathCard({ path, selected, onSelect }: Props) {
             ))}
           </View>
         </View>
-        <Animated.View style={[styles.ring, ringStyle]} pointerEvents="none" />
       </Animated.View>
+      {/* Sibling of wrap (not a child) so the ring's stroke isn't clipped by
+          wrap's overflow: 'hidden'. Renders after wrap → draws on top of its
+          1px gray border, replacing it with the gold accent when selected. */}
+      <Animated.View style={[styles.ring, ringStyle]} pointerEvents="none" />
     </Pressable>
   );
 }

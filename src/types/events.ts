@@ -68,7 +68,40 @@ export type GameEvent = {
   fallbackText?: string;   // deterministic text used when AI narrative is off (always, for MVP)
   tags?: string[];
   art?: string;            // asset key, e.g. 'event_student_loan'. Optional; placeholder shows if absent.
+  // Months a parked ("Decide later") decision survives before lapsing. Absent
+  // means use CATEGORY_DEFER_DEFAULT for the event's category. A value of 0
+  // means the decision is non-deferrable and the card must be answered now.
+  deferWindow?: number;
+  // Consequences for letting a parked decision lapse (expire). Absent =
+  // silent vanish, no effects (the common case). Mirrors the effect-bearing
+  // fields of Choice so the same applyChoice path can run it.
+  onLapse?: {
+    effects?: Partial<Record<StatKey, number>>;
+    setsFlags?: string[];
+    resultText?: string;
+  };
 };
+
+// Category-level default for how long a parked decision survives. Pressure
+// beats are immediate by default (0 = non-deferrable). Foundation defaults to
+// 2 so the general run of university decisions can be parked; the few true
+// must-decide-now beats (whats_next, major_choice, drop_out_decision,
+// networking_event) override back to 0 in content. Overridden per-event via
+// GameEvent.deferWindow.
+export const CATEGORY_DEFER_DEFAULT: Record<EventCategory, number> = {
+  pressure: 0,
+  foundation: 2,
+  opportunity: 3,
+  career: 3,
+  investing: 3,
+};
+
+// Single source of truth for "how long can this decision sit parked." Reads
+// the per-event override if present, otherwise falls back to the category
+// default. A return value of 0 means the event is not deferrable.
+export function effectiveDeferWindow(event: GameEvent): number {
+  return event.deferWindow ?? CATEGORY_DEFER_DEFAULT[event.category];
+}
 
 // Pacing controller output (§10).
 export type Beat = 'quiet' | 'decision' | 'priority';

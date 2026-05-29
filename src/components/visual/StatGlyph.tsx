@@ -8,7 +8,8 @@ export type StatGlyphName =
   | 'star'
   | 'target'
   | 'bolt'
-  | 'trendingUp';
+  | 'trendingUp'
+  | 'clock';
 
 type Props = {
   name: StatGlyphName;
@@ -162,6 +163,35 @@ export function StatGlyph({ name, size = 16, color = colors.accent }: Props) {
               style="stroke"
               strokeWidth={stroke}
               strokeJoin="round"
+              strokeCap="round"
+              color={color}
+            />
+          </>
+        );
+      }
+      case 'clock': {
+        // Outline circle + two hands meeting at center. Minute hand straight
+        // up, hour hand pointing to the 4 — distinct silhouette from `target`
+        // (no inner ring) and from `star` (no points).
+        const hands = Skia.Path.Make();
+        hands.moveTo(8 * s, 8 * s);
+        hands.lineTo(8 * s, 4 * s);
+        hands.moveTo(8 * s, 8 * s);
+        hands.lineTo(10.6 * s, 10.6 * s);
+        return (
+          <>
+            <Circle
+              cx={8 * s}
+              cy={8 * s}
+              r={6 * s}
+              style="stroke"
+              strokeWidth={stroke}
+              color={color}
+            />
+            <Path
+              path={hands}
+              style="stroke"
+              strokeWidth={stroke}
               strokeCap="round"
               color={color}
             />
