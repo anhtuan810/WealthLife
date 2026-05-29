@@ -25,6 +25,7 @@ import {
 } from '../components/visual/StatGlyph';
 import { colors, radii, spacing, typography } from '../theme';
 import { FOUNDATION_PATH_BY_ID } from '../data/foundationPaths';
+import { identityTitle } from '../data/directions';
 import { freedomPct, leaningFromFlags, netWorth, type Player } from '../game/player';
 import { useGameStore } from '../state/gameStore';
 import { CashFlowDetail } from './dashboard/CashFlowDetail';
@@ -142,6 +143,10 @@ export function DashboardLayer() {
   // outfit can hint at the player's tilt even before they take the
   // choose_direction beat.
   const direction = player.direction ?? leaningFromFlags(player.flags);
+  // Identity title under the figure reads from the committed direction only —
+  // pre-commit career players show the muted "Finding your direction" state
+  // even when a leaning flag has already tilted the figure's outfit.
+  const identity = identityTitle(player.phase, player.direction);
   // Figure's stress prop is 0–5; engine stores 0–100.
   const figureStress = clamp(player.stress / 20, 0, 5);
   const figureFreedom =
@@ -227,6 +232,16 @@ export function DashboardLayer() {
           </View>
         </View>
 
+        <Text
+          style={[
+            styles.identityTitle,
+            identity.muted && styles.identityTitleMuted,
+          ]}
+          numberOfLines={1}
+        >
+          {identity.label}
+        </Text>
+
         <View style={styles.moneyRow}>
           <MoneyCell label="CASH" value={fmtMoney(player.cash)} />
           <MoneyCell
@@ -276,18 +291,6 @@ export function DashboardLayer() {
         />
         <SkipLink disabled={advanceDisabled} onPress={skipToNextDecision} />
       </View>
-
-      {/* Settings gear — pinned top-right within the dashLayer frame, which
-          already sits below the notch and inside the horizontal safe inset
-          (see HomeScreen styles.layer/dashLayer). Placeholder press for now. */}
-      <Pressable
-        accessibilityLabel="Settings"
-        onPress={() => {}}
-        style={styles.gear}
-        hitSlop={8}
-      >
-        <Text style={styles.gearGlyph}>⚙</Text>
-      </Pressable>
 
       {/* Detail sheets sit above the scroll content but inside the dashboard
           frame. They render nothing when closed, and dismiss on backdrop tap
@@ -502,8 +505,6 @@ function Stress({ level }: { level: number }) {
   );
 }
 
-const GEAR_SIZE = 34;
-
 const styles = StyleSheet.create({
   root: {
     flex: 1,
@@ -520,8 +521,6 @@ const styles = StyleSheet.create({
   },
   header: {
     gap: spacing.sm,
-    // Keep the kicker / title clear of the absolutely-positioned gear.
-    paddingRight: GEAR_SIZE + spacing.sm,
   },
   eyebrow: {
     ...typography.eyebrow,
@@ -554,6 +553,19 @@ const styles = StyleSheet.create({
   figureWrap: {
     alignItems: 'center',
     justifyContent: 'center',
+  },
+  identityTitle: {
+    ...typography.eyebrow,
+    color: colors.textPrimary,
+    textAlign: 'center',
+    textTransform: 'uppercase',
+    // Pull the line tight under the hero row so it reads as a caption on the
+    // figure rather than a standalone block — scrollContent's gap would
+    // otherwise space it like a separate section.
+    marginTop: -spacing.sm,
+  },
+  identityTitleMuted: {
+    opacity: 0.55,
   },
   strengthPip: {
     gap: 2,
@@ -711,24 +723,5 @@ const styles = StyleSheet.create({
   },
   skipTextDisabled: {
     color: colors.textFaint,
-  },
-  gear: {
-    position: 'absolute',
-    top: 0,
-    right: 0,
-    width: GEAR_SIZE,
-    height: GEAR_SIZE,
-    borderRadius: GEAR_SIZE / 2,
-    borderWidth: 1,
-    borderColor: colors.borderSoft,
-    backgroundColor: 'rgba(20, 23, 28, 0.6)',
-    alignItems: 'center',
-    justifyContent: 'center',
-    zIndex: 10,
-  },
-  gearGlyph: {
-    color: colors.textSecondary,
-    fontSize: 16,
-    lineHeight: 18,
   },
 });

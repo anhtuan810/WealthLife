@@ -8,6 +8,7 @@ import Animated, {
   withTiming,
 } from 'react-native-reanimated';
 import { colors, radii, spacing, typography } from '../../theme';
+import { StatGlyph, type StatGlyphName } from '../visual/StatGlyph';
 
 type Props = {
   label: string;
@@ -17,12 +18,18 @@ type Props = {
   // direction signal. Doesn't change behavior — the player can still pick
   // any other option.
   aligned?: boolean;
+  // Leading procedural icon representing the choice's dominant stat effect.
+  icon?: StatGlyphName | null;
+  // Category-derived accent applied to the icon and trailing chevron so the
+  // whole card reads as one event; the per-choice signal is in the icon shape.
+  accent?: string;
 };
 
 // Secondary-style decision button — quieter than PrimaryButton so the event
 // itself remains the focus. Stacks 2–4 per EventCard.
-export function ChoiceButton({ label, onPress, aligned }: Props) {
+export function ChoiceButton({ label, onPress, aligned, icon, accent }: Props) {
   const press = useSharedValue(0);
+  const tint = accent ?? colors.accent;
 
   const wrapStyle = useAnimatedStyle(() => ({
     transform: [{ scale: 1 - press.value * 0.012 }],
@@ -44,13 +51,18 @@ export function ChoiceButton({ label, onPress, aligned }: Props) {
     >
       <Animated.View style={[styles.wrap, aligned && styles.wrapAligned, wrapStyle]}>
         <View style={styles.body}>
+          {icon ? (
+            <View style={styles.iconSlot}>
+              <StatGlyph name={icon} size={18} color={tint} />
+            </View>
+          ) : null}
           <View style={styles.labelCol}>
             <Text style={styles.label}>{label}</Text>
             {aligned && (
               <Text style={styles.alignedHint}>YOUR LEANING</Text>
             )}
           </View>
-          <Text style={styles.chev}>›</Text>
+          <Text style={[styles.chev, { color: tint }]}>›</Text>
         </View>
       </Animated.View>
     </Pressable>
@@ -75,6 +87,12 @@ const styles = StyleSheet.create({
     paddingHorizontal: spacing.lg,
     paddingVertical: spacing.md + 2,
     gap: spacing.md,
+  },
+  iconSlot: {
+    width: 18,
+    height: 18,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   labelCol: {
     flex: 1,

@@ -181,12 +181,11 @@ export function HomeScreen() {
             ))}
           </ScrollView>
 
-          <Animated.View
-            style={[styles.continueWrap, continueStyle]}
-            pointerEvents={selectedPath ? 'auto' : 'none'}
-          >
-            <PrimaryButton label="Continue" onPress={handleContinue} />
-          </Animated.View>
+          {selectedPath ? (
+            <Animated.View style={continueStyle} pointerEvents="auto">
+              <PrimaryButton label="Continue" onPress={handleContinue} />
+            </Animated.View>
+          ) : null}
         </Animated.View>
 
         {/* Dashboard / run-summary layer. The summary takes over once
@@ -253,6 +252,7 @@ const styles = StyleSheet.create({
   pathsLayer: {
     justifyContent: 'flex-start',
     gap: spacing.lg,
+    paddingBottom: spacing.xl,
   },
   dashLayer: {
     paddingTop: 72,
@@ -280,7 +280,7 @@ const styles = StyleSheet.create({
   },
   footnote: {
     ...typography.caption,
-    color: colors.textFaint,
+    color: colors.textSecondary,
     textAlign: 'center',
     letterSpacing: 2.4,
   },
@@ -305,9 +305,6 @@ const styles = StyleSheet.create({
   },
   cardStack: {
     gap: spacing.md,
-    paddingBottom: spacing.md,
-  },
-  continueWrap: {
-    marginTop: spacing.sm,
+    paddingBottom: spacing.xl,
   },
 });

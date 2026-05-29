@@ -1,5 +1,5 @@
 import React, { useEffect } from 'react';
-import { StyleSheet, Text, View } from 'react-native';
+import { ScrollView, StyleSheet, Text, View } from 'react-native';
 import Animated, {
   Easing,
   useAnimatedStyle,
@@ -10,8 +10,9 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { colors, radii, spacing, typography } from '../../theme';
 import type { LifeDirection } from '../../game/player';
 import type { GameEvent } from '../../types/events';
-import { ArtSlot } from '../visual/ArtSlot';
+import { ArtSlot, CATEGORY_TINT } from '../visual/ArtSlot';
 import { ChoiceButton } from './ChoiceButton';
+import { glyphForEffects } from './choiceIcon';
 
 type Props = {
   event: GameEvent;
@@ -42,6 +43,8 @@ export function EventCard({ event, onChoose, leaning }: Props) {
     transform: [{ translateY: (1 - v.value) * 28 }],
   }));
 
+  const categoryAccent = CATEGORY_TINT[event.category];
+
   return (
     <View style={styles.overlay} pointerEvents="auto">
       <Animated.View style={[styles.backdrop, backdropStyle]} pointerEvents="auto" />
@@ -56,10 +59,15 @@ export function EventCard({ event, onChoose, leaning }: Props) {
           />
           <View style={styles.cardBody}>
             <ArtSlot assetKey={event.art} category={event.category} aspect={3 / 2} />
-            <Text style={styles.eyebrow}>DECISION</Text>
+            <Text style={[styles.eyebrow, { color: categoryAccent }]}>DECISION</Text>
             <Text style={styles.title}>{event.title}</Text>
             {event.fallbackText ? (
-              <Text style={styles.body}>{event.fallbackText}</Text>
+              <ScrollView
+                style={styles.bodyScroll}
+                showsVerticalScrollIndicator={false}
+              >
+                <Text style={styles.body}>{event.fallbackText}</Text>
+              </ScrollView>
             ) : null}
 
             <View style={styles.choices}>
@@ -71,6 +79,8 @@ export function EventCard({ event, onChoose, leaning }: Props) {
                   aligned={
                     !!leaning && c.setsDirection === leaning
                   }
+                  icon={glyphForEffects(c.effects)}
+                  accent={categoryAccent}
                 />
               ))}
             </View>
@@ -92,6 +102,7 @@ const styles = StyleSheet.create({
   },
   cardWrap: {
     paddingHorizontal: spacing.xl,
+    maxHeight: '90%',
   },
   card: {
     borderRadius: radii.xl,
@@ -99,10 +110,16 @@ const styles = StyleSheet.create({
     borderColor: colors.border,
     overflow: 'hidden',
     backgroundColor: colors.surface,
+    flexShrink: 1,
   },
   cardBody: {
     padding: spacing.xl,
     gap: spacing.lg,
+    flexShrink: 1,
+  },
+  bodyScroll: {
+    flexShrink: 1,
+    minHeight: 0,
   },
   eyebrow: {
     ...typography.eyebrow,

@@ -21,7 +21,7 @@ type Props = {
   rounded?: number;
 };
 
-const CATEGORY_TINT: Record<EventCategory, string> = {
+export const CATEGORY_TINT: Record<EventCategory, string> = {
   foundation: colors.accent,
   career: colors.capital,
   investing: colors.emerald,
