@@ -29,6 +29,10 @@ import {
 } from '../systems/eventEngine';
 import { effectiveDeferWindow } from '../types/events';
 import { computeGrade, type GradeResult } from '../systems/grade';
+import {
+  WORK_SITUATION_FLAG,
+  type Profile,
+} from '../personalization';
 
 // Compression loop bounds.
 //   SKIP_SAFETY_CAP: maximum months a single fast-forward can advance.
@@ -322,6 +326,13 @@ function advanceMonthStep(
 }
 
 type GameState = {
+  // Personalization profile — collected by the onboarding flow at the start
+  // of a new run, before start-point selection. Survives the run (loaded on
+  // resume) and is reset by resetSelection so a fresh "Play Again" replays
+  // onboarding. PURE TEXT input: the engine never reads this; EventCard and
+  // the opening/ending screens consume it for slot-fills and why-copy.
+  profile: Profile | null;
+
   // Start-point selection — the new entry into a run. University defers
   // foundation-path selection to selectedPath; the three later starts defer
   // direction selection to selectedDirection. startGame consumes whatever
@@ -356,6 +367,7 @@ type GameState = {
   // acknowledgment surface will consume + clear this. Nothing renders yet.
   lapsedThisStep: LapsedEntry[];
 
+  setProfile: (profile: Profile) => void;
   selectStartPoint: (id: StartPointId) => void;
   selectFoundationPath: (id: FoundationPathId) => void;
   selectDirection: (direction: StartPointDirection) => void;
@@ -395,11 +407,13 @@ const INITIAL_RUN_STATE = {
 } as const;
 
 export const useGameStore = create<GameState>((set, get) => ({
+  profile: null,
   selectedStartPoint: null,
   selectedPath: null,
   selectedDirection: null,
   ...INITIAL_RUN_STATE,
 
+  setProfile: (profile) => set({ profile }),
   selectStartPoint: (id) => set({ selectedStartPoint: id }),
   selectFoundationPath: (id) => set({ selectedPath: id }),
   selectDirection: (direction) => set({ selectedDirection: direction }),
@@ -407,10 +421,21 @@ export const useGameStore = create<GameState>((set, get) => ({
   // Spawn a player from the selected start-point + matching sub-pick.
   // university requires a foundation-path pick; the three later starts
   // require a direction. Either is a no-op if the prerequisite picker
-  // hasn't been touched.
+  // hasn't been touched. The work-situation flag (if any) from the
+  // onboarding profile is appended to player.flags at spawn so future
+  // content can branch on it. Flags only — NEVER any other engine input.
   startGame: () => {
     const startPointId = get().selectedStartPoint;
     if (!startPointId) return;
+    const profile = get().profile;
+    const profileFlag =
+      profile && profile.workSituation !== 'unset'
+        ? WORK_SITUATION_FLAG[profile.workSituation]
+        : null;
+    const withProfileFlag = (p: Player): Player =>
+      profileFlag && !p.flags.includes(profileFlag)
+        ? { ...p, flags: [...p.flags, profileFlag] }
+        : p;
     if (startPointId === 'university') {
       const pathId = get().selectedPath;
       if (!pathId) return;
@@ -419,7 +444,10 @@ export const useGameStore = create<GameState>((set, get) => ({
       // under the hood, and we pass the picked foundation path through.
       set({
         ...INITIAL_RUN_STATE,
-        player: { ...createPlayer(pathId), startPointId: 'university' },
+        player: withProfileFlag({
+          ...createPlayer(pathId),
+          startPointId: 'university',
+        }),
       });
       return;
     }
@@ -427,14 +455,18 @@ export const useGameStore = create<GameState>((set, get) => ({
     if (!direction) return;
     set({
       ...INITIAL_RUN_STATE,
-      player: createPlayerFromStartPoint(startPointId, direction),
+      player: withProfileFlag(
+        createPlayerFromStartPoint(startPointId, direction),
+      ),
     });
   },
 
-  // Full reset — clears every pick AND all run state. Used by the cold-boot
-  // reset and "Play Again" from the run summary.
+  // Full reset — clears every pick AND all run state, AND the onboarding
+  // profile so "Play Again" replays the 5-question intro. Used by the
+  // cold-boot reset and by Play Again from the run summary.
   resetSelection: () =>
     set({
+      profile: null,
       selectedStartPoint: null,
       selectedPath: null,
       selectedDirection: null,

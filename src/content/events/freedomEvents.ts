@@ -62,7 +62,9 @@ const TUNE_LATELIFE_FREEDOM = {
   },
   legacy: {
     give: { assets: -12_000, reputation: 10, stress: -6 },
-    hold: { stress: -2 },
+    // Brief says "Hold it close (assets preserved)" — no other deltas.
+    // Empty effects keeps the choice strictly inside the directional lock.
+    hold: {},
   },
   // Variance modeled as two outcomes — same pattern as sequenceRisk.
   lateScare: {
@@ -90,7 +92,7 @@ export const FREEDOM_EVENTS: readonly GameEvent[] = [
     title: 'Work, Optional',
     category: 'career',
     phase: 'freedom',
-    art: 'freedom_work_optional',
+    art: 'event_freedom_work_optional',
     conditions: { phase: 'freedom', stats: { passiveIncome: '>=600' } },
     fallbackText:
       'For the first time, the math says you could step back. The question is whether you believe it.',
@@ -129,7 +131,7 @@ export const FREEDOM_EVENTS: readonly GameEvent[] = [
     title: 'The Drawdown Question',
     category: 'investing',
     phase: 'freedom',
-    art: 'freedom_drawdown_question',
+    art: 'event_freedom_drawdown_question',
     conditions: { phase: 'freedom' },
     fallbackText:
       'The portfolio is meant to be spent eventually. Start drawing, or let it compound one more cycle?',
@@ -162,7 +164,7 @@ export const FREEDOM_EVENTS: readonly GameEvent[] = [
     category: 'pressure',
     phase: 'freedom',
     deferWindow: 0,
-    art: 'freedom_sequence_risk',
+    art: 'event_freedom_sequence_risk',
     conditions: { phase: 'freedom', stats: { assets: '>=10000' } },
     fallbackText:
       'A bad market arrives with less time to recover than you used to have. Timing, not size, is the threat now.',
@@ -215,7 +217,7 @@ export const FREEDOM_EVENTS: readonly GameEvent[] = [
     title: "Late Bloomer's Sprint",
     category: 'opportunity',
     phase: 'freedom',
-    art: 'freedom_late_bloomers_sprint',
+    art: 'event_freedom_late_bloomers_sprint',
     conditions: {
       phase: 'freedom',
       requiresFlags: ['started_midlife'],
@@ -259,7 +261,7 @@ export const FREEDOM_EVENTS: readonly GameEvent[] = [
     title: "Late Bloomer's Sprint",
     category: 'opportunity',
     phase: 'freedom',
-    art: 'freedom_late_bloomers_sprint',
+    art: 'event_freedom_late_bloomers_sprint',
     conditions: {
       phase: 'freedom',
       stats: { passiveIncome: '<=400' },
@@ -302,7 +304,7 @@ export const FREEDOM_EVENTS: readonly GameEvent[] = [
     category: 'opportunity',
     phase: 'freedom',
     deferWindow: 3,
-    art: 'freedom_optionality',
+    art: 'event_freedom_optionality',
     conditions: { phase: 'freedom', stats: { passiveIncome: '>=800' } },
     fallbackText:
       'You have room to spare. You could give some away, help someone, or simply hold it as security.',
@@ -344,13 +346,15 @@ export const FREEDOM_EVENTS: readonly GameEvent[] = [
 
   // ─────────────────────────────────────────────────────────────────────
   // LATE-LIFE EXPANSION — see docs/WealthLife_latelife_content_expansion.md
-  // 6 freedom additions + 1 ambient texture beat. Brings freedom-phase
-  // density from ~5 → ~11 events so the 50–60 stretch lands a decision
-  // every few months. Same conventions as the original 5.
+  // 6 freedom additions + 2 age-tiered ambient siblings. Brings freedom-
+  // phase density from ~5 → ~11 events so the 50–60 stretch lands a
+  // decision every few months. Same conventions as the original 5.
   //
-  // Ambient note: freedom_quiet_season is repeatable, low-weight, and
-  // writes ZERO money on both choices — the §3 exception. No engine
-  // cooldown primitive; low weight + competing pool is the cooldown.
+  // Ambient note: brief §3 asked for repeatable + low-weight + cooldown.
+  // Engine has no cooldown primitive — see the long header comment on
+  // growth_market_drift in growthEvents.ts. Same fix here: two non-
+  // repeatable sibling records gated to 5-year windows (50-54, 55-59).
+  // Both choices write ZERO money (TUNE_LATELIFE_FREEDOM.quietSeason).
   // ─────────────────────────────────────────────────────────────────────
 
   // ── SHARED · PRESSURE — health costs start to climb ──────────────────

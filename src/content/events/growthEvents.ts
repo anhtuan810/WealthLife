@@ -97,7 +97,10 @@ const TUNE_LATELIFE_GROWTH = {
   },
   secondStream: {
     build: { cash: -3_000, passiveIncome: 280, discipline: 4 },
-    focus: { salary: 300 },
+    // Brief says "salary steady" — no directional movement. Empty effects
+    // means the choice is a deliberate non-action (firedEventIds still
+    // tracks it so the beat doesn't refire).
+    focus: {},
   },
   payoffVsInvest: {
     payDown: { debt: -20_000, stress: -6 },
@@ -105,7 +108,9 @@ const TUNE_LATELIFE_GROWTH = {
   },
   badBet: {
     goInWin: { assets: 20_000, riskTolerance: 6 },
-    goInLose: { assets: -15_000, riskTolerance: 6, stress: 8 },
+    // Brief locks only assets↓ + riskTolerance↑ on the lose path. Stress
+    // bump removed to stay inside the brief's directional locks.
+    goInLose: { assets: -15_000, riskTolerance: 6 },
     pass: { discipline: 5 },
   },
   peakEarning: {
@@ -132,7 +137,7 @@ export const GROWTH_EVENTS: readonly GameEvent[] = [
     title: 'Automate the Surplus',
     category: 'investing',
     phase: 'growth',
-    art: 'growth_index_habit',
+    art: 'event_growth_index_habit',
     conditions: { phase: 'growth' },
     fallbackText:
       'Your income finally outpaces your life. The boring move is to automate the surplus into the market and never look at it.',
@@ -167,13 +172,13 @@ export const GROWTH_EVENTS: readonly GameEvent[] = [
   // ── SHARED · PRESSURE — the bigger life and what it costs ────────────
   {
     id: 'growth_lifestyle_creep',
-    title: 'A Bigger Life',
+    title: 'A Bigger Life in {city}',
     category: 'pressure',
     phase: 'growth',
-    art: 'growth_lifestyle_creep',
+    art: 'event_growth_lifestyle_creep',
     conditions: { phase: 'growth' },
     fallbackText:
-      'The nicer place, the upgraded everything — earned, tempting, and permanent. Comfort now, or coverage later.',
+      'A nicer place in {city}, the upgraded everything — earned, tempting, and permanent. Comfort now, or coverage later.',
     choices: [
       {
         id: 'upgrade',
@@ -217,7 +222,7 @@ export const GROWTH_EVENTS: readonly GameEvent[] = [
     category: 'pressure',
     phase: 'growth',
     deferWindow: 0,
-    art: 'growth_market_correction',
+    art: 'event_growth_market_correction',
     conditions: { phase: 'growth' },
     fallbackText:
       'The market gives back two good years in two bad months. Your statements look ugly.',
@@ -254,14 +259,14 @@ export const GROWTH_EVENTS: readonly GameEvent[] = [
   // Pass is silent vanish — the missed stream IS the consequence. No onLapse.
   {
     id: 'growth_real_estate',
-    title: 'A Place That Could Pay You',
+    title: 'A Place in {city} That Could Pay You',
     category: 'opportunity',
     phase: 'growth',
     deferWindow: 1,
-    art: 'growth_real_estate',
+    art: 'event_growth_real_estate',
     conditions: { phase: 'growth' },
     fallbackText:
-      'A place you could rent out. Leverage cuts both ways — it builds an income stream and a liability at once.',
+      'A place in {city} you could rent out. Leverage cuts both ways — it builds an income stream and a liability at once.',
     choices: [
       {
         id: 'buy_property',
@@ -285,13 +290,13 @@ export const GROWTH_EVENTS: readonly GameEvent[] = [
   // ── SHARED · CAREER — the ceiling you can feel ───────────────────────
   {
     id: 'growth_career_plateau',
-    title: 'The Ceiling You Can Feel',
+    title: 'The Ceiling in {field}',
     category: 'career',
     phase: 'growth',
-    art: 'growth_career_plateau',
+    art: 'event_growth_career_plateau',
     conditions: { phase: 'growth' },
     fallbackText:
-      'The easy growth is behind you. The next level costs more than the last one did.',
+      'The easy growth in {field} is behind you. The next level costs more than the last one did.',
     choices: [
       {
         id: 'grind_for_it',
@@ -344,7 +349,7 @@ export const GROWTH_EVENTS: readonly GameEvent[] = [
       resultText:
         'You ignore it. The body files its own decision and bills you later.',
     },
-    art: 'growth_health_reckoning',
+    art: 'event_growth_health_reckoning',
     conditions: { phase: 'growth', stats: { stress: '>=30' } },
     fallbackText:
       'Years of pushing show up at once. Address it now or pay later with interest.',
@@ -375,7 +380,7 @@ export const GROWTH_EVENTS: readonly GameEvent[] = [
     title: 'Golden Handcuffs',
     category: 'career',
     phase: 'growth',
-    art: 'growth_corp_golden_handcuffs',
+    art: 'event_growth_corp_golden_handcuffs',
     conditions: {
       phase: 'growth',
       requiresFlags: ['leaning_corporate'],
@@ -414,7 +419,7 @@ export const GROWTH_EVENTS: readonly GameEvent[] = [
     category: 'opportunity',
     phase: 'growth',
     deferWindow: 1,
-    art: 'growth_founder_exit_window',
+    art: 'event_growth_founder_exit_window',
     conditions: {
       phase: 'growth',
       requiresFlags: ['leaning_founder'],
@@ -456,7 +461,7 @@ export const GROWTH_EVENTS: readonly GameEvent[] = [
     title: 'Productize What You Know',
     category: 'investing',
     phase: 'growth',
-    art: 'growth_freelancer_productize',
+    art: 'event_growth_freelancer_productize',
     conditions: {
       phase: 'growth',
       requiresFlags: ['leaning_independent'],
@@ -493,16 +498,18 @@ export const GROWTH_EVENTS: readonly GameEvent[] = [
 
   // ─────────────────────────────────────────────────────────────────────
   // LATE-LIFE EXPANSION — see docs/WealthLife_latelife_content_expansion.md
-  // 8 growth additions + 1 ambient texture beat. Doubles growth density so
-  // the back half lands a decision every few months instead of skipping
-  // through near-empty decades. Same conventions as the original 6:
-  // directional effects, magnitudes in TUNE_LATELIFE_GROWTH for Phase 3.
+  // 8 growth additions + 3 age-tiered ambient siblings. Doubles growth
+  // density so the back half lands a decision every few months instead of
+  // skipping through near-empty decades. Same conventions as the original
+  // 6: directional effects, magnitudes in TUNE_LATELIFE_GROWTH for Phase 3.
   //
-  // Ambient note: growth_market_drift is repeatable, low weight, and writes
-  // ZERO money on both choices — the brief §3 exception ("texture, not
-  // money"). The engine has no cooldown primitive; we lean on low weight
-  // and the competing decision pool to keep firings sparse. Verified via
-  // the coverage sweep — the four-start spread must not move >~2 pts.
+  // Ambient note: brief §3 asked for repeatable + low-weight + cooldown.
+  // The engine has no cooldown primitive (DO NOT TOUCH the engine), so the
+  // repeatable-only attempt spammed 71% of growth decision beats once the
+  // non-repeatable pool exhausted. Switched to three NON-repeatable sibling
+  // records gated to 5-year age windows (35-39, 40-44, 45-49) — same
+  // texture, capped firings, never adjacent. Both choices write ZERO money
+  // (TUNE_LATELIFE_GROWTH.marketDrift) so they can't leak the freedom bar.
   // ─────────────────────────────────────────────────────────────────────
 
   // ── SHARED · PRESSURE — a dependent enters the picture ───────────────

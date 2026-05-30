@@ -26,6 +26,7 @@ import {
   type Player,
 } from '../game/player';
 import { useGameStore } from '../state/gameStore';
+import { resolveWhyEnding } from '../personalization';
 
 const fmtMoney = (n: number) => {
   const sign = n < 0 ? '-' : '';
@@ -40,6 +41,7 @@ export function RunSummaryScreen({ onPlayAgain }: Props) {
   const player = useGameStore((s) => s.player);
   const endingResult = useGameStore((s) => s.endingResult);
   const grade = useGameStore((s) => s.grade);
+  const profile = useGameStore((s) => s.profile);
   const resetSelection = useGameStore((s) => s.resetSelection);
 
   const { width } = useWindowDimensions();
@@ -106,6 +108,16 @@ export function RunSummaryScreen({ onPlayAgain }: Props) {
           </Text>
           <Text style={styles.endingTitle}>{endingResult.title}</Text>
           <Text style={styles.endingCopy}>{endingResult.copy}</Text>
+          {/* why × outcome-band reflection (framework §3). PURE READ over
+              grade + ending — band derivation must not alter either. ADDS
+              to the grade-keyed copy above; never replaces it. */}
+          <Text style={styles.whyEnding}>
+            {resolveWhyEnding(
+              profile ?? undefined,
+              grade.letter,
+              endingResult,
+            )}
+          </Text>
         </Animated.View>
 
         <Animated.View style={[styles.gradeBlock, gradeStyle]}>
@@ -266,6 +278,19 @@ const styles = StyleSheet.create({
     ...typography.body,
     color: colors.textSecondary,
     marginTop: spacing.sm,
+  },
+  // Slightly lifted treatment to mark it as a separate beat — same family
+  // as endingCopy, brighter color + small top divider via margin so the
+  // reflection reads as a closing line, not a continuation.
+  whyEnding: {
+    ...typography.body,
+    color: colors.textPrimary,
+    fontSize: 15,
+    lineHeight: 22,
+    marginTop: spacing.md,
+    paddingTop: spacing.md,
+    borderTopWidth: 1,
+    borderTopColor: colors.borderSoft,
   },
   gradeBlock: {
     alignItems: 'center',

@@ -19,6 +19,7 @@
     "src/game/**/*.ts",
     "src/content/**/*.ts",
     "src/systems/**/*.ts",
+    "src/personalization/**/*.ts",
     "src/types/events.ts",
     "scripts/**/*.ts"
   ]

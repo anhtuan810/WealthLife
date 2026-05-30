@@ -12,6 +12,7 @@ import { PENDING_DECISIONS_CAP } from '../../data/constants';
 import type { LifeDirection } from '../../game/player';
 import type { GameEvent } from '../../types/events';
 import { effectiveDeferWindow } from '../../types/events';
+import { resolveEventText, type Profile } from '../../personalization';
 import { ArtSlot, CATEGORY_TINT } from '../visual/ArtSlot';
 import { ChoiceButton } from './ChoiceButton';
 import { glyphForEffects } from './choiceIcon';
@@ -29,6 +30,11 @@ type Props = {
   // setsDirection matches this, the card highlights it as "your leaning" —
   // context only, the player can still pick anything.
   leaning?: LifeDirection;
+  // Personalization profile (spec §2). PURE TEXT — fed into resolveEventText
+  // for {slot} substitution in title / fallbackText / choice.label. Undefined
+  // → render the neutral default for every slot. Either way the engine still
+  // reads the raw event, so identity of the run is unaffected.
+  profile?: Profile;
 };
 
 // Full-screen decision overlay. Mounted at HomeScreen level so the backdrop
@@ -40,7 +46,11 @@ export function EventCard({
   onDefer,
   pendingCount = 0,
   leaning,
+  profile,
 }: Props) {
+  // pack is undefined in this slice — v2 narrative override drops in here
+  // without touching the engine or this call site.
+  const rendered = resolveEventText(event, profile, undefined);
   const isDeferrable = effectiveDeferWindow(event) > 0 && !!onDefer;
   const atCap = pendingCount >= PENDING_DECISIONS_CAP;
   const canDefer = isDeferrable && !atCap;
@@ -81,21 +91,21 @@ export function EventCard({
           <View style={styles.cardBody}>
             <ArtSlot assetKey={event.art} category={event.category} aspect={3 / 2} />
             <Text style={[styles.eyebrow, { color: categoryAccent }]}>DECISION</Text>
-            <Text style={styles.title}>{event.title}</Text>
-            {event.fallbackText ? (
+            <Text style={styles.title}>{rendered.title}</Text>
+            {rendered.fallbackText ? (
               <ScrollView
                 style={styles.bodyScroll}
                 showsVerticalScrollIndicator={false}
               >
-                <Text style={styles.body}>{event.fallbackText}</Text>
+                <Text style={styles.body}>{rendered.fallbackText}</Text>
               </ScrollView>
             ) : null}
 
             <View style={styles.choices}>
-              {event.choices.map((c) => (
+              {event.choices.map((c, i) => (
                 <ChoiceButton
                   key={c.id}
-                  label={c.label}
+                  label={rendered.choices[i].label}
                   onPress={() => onChoose(c.id)}
                   aligned={
                     !!leaning && c.setsDirection === leaning

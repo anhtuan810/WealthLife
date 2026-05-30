@@ -19,6 +19,8 @@ import { EventCard } from '../components/game/EventCard';
 import { LapsedOverlay } from '../components/game/LapsedOverlay';
 import { PhaseTransitionOverlay } from '../components/game/PhaseTransitionOverlay';
 import { DashboardLayer } from './DashboardLayer';
+import { OnboardingScreen } from './OnboardingScreen';
+import { OpeningMomentScreen } from './OpeningMomentScreen';
 import { RunSummaryScreen } from './RunSummaryScreen';
 import { DevMenu } from '../dev/DevMenu';
 import { FOUNDATION_PATHS } from '../data/foundationPaths';
@@ -31,12 +33,28 @@ import { leaningFromFlags } from '../game/player';
 import { useGameStore } from '../state/gameStore';
 import { colors, spacing, typography } from '../theme';
 
-type Stage = 'title' | 'startPoint' | 'paths' | 'direction' | 'dashboard';
+type Stage =
+  | 'title'
+  | 'onboarding'
+  | 'startPoint'
+  | 'paths'
+  | 'direction'
+  | 'opening'
+  | 'dashboard';
+// Index values that drive opacity/translate interpolations on the original
+// animated layers (title/startPoint/paths/dashboard). onboarding borrows the
+// startPoint index and opening borrows the dashboard index — both new stages
+// render as full-screen overlays ON TOP of whatever animated layer the
+// borrowed index makes visible, so the visual presentation is the new screen
+// alone; the borrowed indices just keep the underlying animation system
+// coherent (no flash, no half-transition state) without needing a redesign.
 const STAGE_INDEX: Record<Stage, number> = {
   title: 0,
+  onboarding: 1,
   startPoint: 1,
   paths: 2,
   direction: 2, // peer of paths — only one renders per run
+  opening: 3,
   dashboard: 3,
 };
 
@@ -67,6 +85,8 @@ const DIRECTION_OPTIONS: ReadonlyArray<{
 
 export function HomeScreen() {
   const [stage, setStage] = useState<Stage>('title');
+  const profile = useGameStore((s) => s.profile);
+  const setProfile = useGameStore((s) => s.setProfile);
   const selectedStartPoint = useGameStore((s) => s.selectedStartPoint);
   const selectedPath = useGameStore((s) => s.selectedPath);
   const selectedDirection = useGameStore((s) => s.selectedDirection);
@@ -233,14 +253,17 @@ export function HomeScreen() {
     else setStage('direction');
   };
 
+  // Each route through to a run goes: pick → startGame → opening → dashboard.
+  // startGame spawns the player; the opening screen renders against that
+  // player's start point + the onboarding profile, then hands off.
   const handlePathContinue = () => {
     startGame();
-    setStage('dashboard');
+    setStage('opening');
   };
 
   const handleDirectionContinue = () => {
     startGame();
-    setStage('dashboard');
+    setStage('opening');
   };
 
   return (
@@ -264,10 +287,45 @@ export function HomeScreen() {
           </Animated.View>
 
           <Animated.View style={[styles.ctaBlock, titleCtaStyle]}>
-            <PrimaryButton label="Begin" onPress={() => setStage('startPoint')} />
+            <PrimaryButton
+              label="Begin"
+              onPress={() =>
+                // Skip onboarding once a profile already exists (resume case);
+                // a fresh run with no profile in the save runs the 5-question
+                // intro before the start-point picker.
+                setStage(profile ? 'startPoint' : 'onboarding')
+              }
+            />
             <Text style={styles.footnote}>Dev build · v0.1</Text>
           </Animated.View>
         </Animated.View>
+
+        {/* Onboarding — 5 skippable questions. Result persists on the store
+            so a resume after this point skips straight to start-point. Full
+            absoluteFill rather than the layer-with-padding wrapper because
+            OnboardingScreen applies its own ScrollView padding internally. */}
+        {stage === 'onboarding' ? (
+          <View style={styles.fullOverlay} pointerEvents="auto">
+            <OnboardingScreen
+              onDone={(p) => {
+                setProfile(p);
+                setStage('startPoint');
+              }}
+            />
+          </View>
+        ) : null}
+
+        {/* Personalized opening — fires once the player is spawned, before
+            the dashboard. Same full-overlay treatment as onboarding. */}
+        {stage === 'opening' && player ? (
+          <View style={styles.fullOverlay} pointerEvents="auto">
+            <OpeningMomentScreen
+              startPointId={player.startPointId ?? 'university'}
+              profile={profile ?? undefined}
+              onContinue={() => setStage('dashboard')}
+            />
+          </View>
+        ) : null}
 
         {/* Start-point picker — the new entry-machinery layer. Replaces the
             old target-age "choose your finish" stage. */}
@@ -411,6 +469,7 @@ export function HomeScreen() {
             onDefer={deferDecision}
             pendingCount={player ? player.pendingDecisions.length : 0}
             leaning={player ? leaningFromFlags(player.flags) : null}
+            profile={profile ?? undefined}
           />
         ) : null}
 
@@ -443,6 +502,12 @@ const styles = StyleSheet.create({
     paddingTop: 96,
     paddingBottom: 56,
     paddingHorizontal: spacing.xl,
+  },
+  // Edge-to-edge overlay for screens that own their own padding/scroll
+  // (OnboardingScreen, OpeningMomentScreen). Sits above every animated
+  // layer so the underlying transitions are visually hidden while active.
+  fullOverlay: {
+    ...StyleSheet.absoluteFill,
   },
   titleLayer: {
     justifyContent: 'space-between',
