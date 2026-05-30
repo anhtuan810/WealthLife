@@ -159,12 +159,20 @@ function driveRun(
       const choice = event.choices[idx] ?? event.choices[0];
       if (!choice) continue;
       player = applyChoice(player, event, choice);
+      // Mirror gameStore.chooseOption: overwrite the current month's entry
+      // in place rather than append. Keeps the §13 invariant
+      // length === month + 1 so this harness measures the same array shape
+      // the real game produces.
       const snapshotNet = Math.round(
         player.cash + player.assets + player.investments - player.debt,
       );
+      const nextHistory =
+        player.netWorthHistory.length > 0
+          ? [...player.netWorthHistory.slice(0, -1), snapshotNet]
+          : [snapshotNet];
       player = {
         ...player,
-        netWorthHistory: [...player.netWorthHistory, snapshotNet],
+        netWorthHistory: nextHistory,
       };
       monthsSinceLastEvent = 0;
     }
@@ -323,6 +331,15 @@ for (const sp of START_POINTS) {
   }
   if (fpct < 0 || fpct > 100) {
     ok = false; failures++; note.push(`freedomPct out of bounds: ${fpct}`);
+  }
+  // §13 history invariant: ONE entry per recorded month (length === month + 1).
+  // Choice resolutions overwrite the trailing entry in place; only tick pushes
+  // new ones. A length drift here means a code path is appending where it
+  // shouldn't (regression of the chooseOption bug).
+  if (result.finalPlayer.netWorthHistory.length !== result.finalPlayer.month + 1) {
+    ok = false; failures++; note.push(
+      `netWorthHistory.length=${result.finalPlayer.netWorthHistory.length} != month+1=${result.finalPlayer.month + 1}`,
+    );
   }
   log(`  [${sp.id}] months=${result.monthsPlayed} finalAge=${result.finalPlayer.age} finalPhase=${result.finalPlayer.phase} freedom=${fpct}% NW=${nw} grade=${grade.letter} ending="${ending.title}" — ${ok ? 'PASS' : 'FAIL'}${note.length ? ` (${note.join('; ')})` : ''}`);
 }

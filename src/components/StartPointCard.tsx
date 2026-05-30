@@ -9,12 +9,22 @@ import Animated, {
 } from 'react-native-reanimated';
 import { LinearGradient } from 'expo-linear-gradient';
 import { colors, radii, spacing, typography } from '../theme';
-import type { StartPoint } from '../data/startPoints';
+import type { StartPoint, StartPointId } from '../data/startPoints';
+import { StatGlyph, type StatGlyphName } from './visual/StatGlyph';
 
 type Props = {
   startPoint: StartPoint;
   selected: boolean;
   onSelect: () => void;
+};
+
+// One thematic glyph per start point — graduates from the existing Skia
+// icon system so they share the figure's render pipeline and palette.
+const GLYPH_FOR_START: Record<StartPointId, StatGlyphName> = {
+  university: 'mortarboard',
+  early: 'sprout',
+  established: 'columns',
+  midlife: 'mountain',
 };
 
 // Picker card for the four life-arc start points. Same visual language as
@@ -58,10 +68,19 @@ export function StartPointCard({ startPoint, selected, onSelect }: Props) {
           style={StyleSheet.absoluteFill}
         />
         <View style={styles.body}>
-          <Text style={styles.name}>{startPoint.label}</Text>
-          <Text style={styles.vibe}>{startPoint.blurb}</Text>
-          <View style={styles.runwayRow}>
-            <Text style={styles.runwayText}>{startPoint.runwayHint}</Text>
+          <View style={styles.avatar}>
+            <StatGlyph
+              name={GLYPH_FOR_START[startPoint.id]}
+              size={32}
+              color={colors.accent}
+            />
+          </View>
+          <View style={styles.copy}>
+            <Text style={styles.name}>{startPoint.label}</Text>
+            <Text style={styles.vibe}>{startPoint.blurb}</Text>
+            <View style={styles.runwayRow}>
+              <Text style={styles.runwayText}>{startPoint.runwayHint}</Text>
+            </View>
           </View>
         </View>
       </Animated.View>
@@ -79,25 +98,50 @@ const styles = StyleSheet.create({
     backgroundColor: colors.surface,
   },
   body: {
-    padding: spacing.lg,
-    gap: spacing.xs,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.md,
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.sm + 2,
+  },
+  // Soft accent-tinted disc behind the glyph — matches the pending-pill
+  // chip treatment elsewhere so the icon reads as "of a piece" with the
+  // rest of the UI.
+  avatar: {
+    width: 48,
+    height: 48,
+    borderRadius: radii.pill,
+    backgroundColor: colors.accentSoft,
+    borderWidth: 1,
+    borderColor: colors.borderSoft,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  copy: {
+    flex: 1,
+    minWidth: 0,
+    gap: 2,
   },
   name: {
     ...typography.title,
     color: colors.textPrimary,
+    fontSize: 19,
   },
   vibe: {
     ...typography.body,
     color: colors.textSecondary,
-    marginTop: spacing.xs,
+    fontSize: 14,
+    lineHeight: 19,
+    marginTop: 2,
   },
   runwayRow: {
-    marginTop: spacing.sm,
+    marginTop: spacing.xs,
   },
   runwayText: {
     ...typography.caption,
     color: colors.textMuted,
     letterSpacing: 1.2,
+    fontSize: 10,
   },
   ring: {
     ...StyleSheet.absoluteFill,

@@ -8,7 +8,6 @@
 
 import type { Player } from '../game/player';
 import { netWorth } from '../game/player';
-import { START_POINT_BY_ID } from '../data/startPoints';
 
 export type GradeLetter = 'S' | 'A' | 'B' | 'C' | 'D';
 
@@ -22,37 +21,21 @@ export type GradeResult = {
   };
 };
 
-// Age-appropriate freedom target — what "100% of the freedom rubric" means
-// at END_AGE. Expressed in freedomRatio units (passiveIncome / expenses).
-// Now the BAR(18) anchor for the age-scaled freedom bar below; runs that
-// start past 18 (early / established / midlife) target a progressively
-// lower bar to credit the shorter runway. History: 0.15 (linear) → 0.65
-// (concave) once the curve was generalized → 0.50–0.65 age-scaled (Phase 3
-// commit, candidate B2).
-export const TARGET_FREEDOM_AT_END_AGE = 0.65;
+// Freedom target — what "100% of the freedom rubric" means at END_AGE.
+// Expressed in freedomRatio units (passiveIncome / expenses). Phase-4
+// closeout: REVERTED to a flat bar after the Phase-3 age-scaled
+// experiment (bar(18)=0.65 → bar(38)=0.50). The "later = harder" framing
+// proved wrong — start-age is flavor, not a difficulty ladder, so every
+// run is judged against the same coverage rubric and "freedom by 60"
+// means the same thing for an 18-start and a 38-start. History: 0.15
+// (linear) → 0.65 (concave, single bar) → 0.50–0.65 age-scaled (Phase 3,
+// reverted) → flat 0.65 (Phase 4 closeout).
+export const FREEDOM_BAR = 0.65;
 
-// Floor of the age-scaled freedom bar at run-start age 38 (midlife). 0.50
-// is candidate B2 from the Phase-3 sweep — the option that keeps midlife's
-// median at A while opening an S band, and matches the proven gradient
-// (university > early > established > midlife) without locking the hardest
-// start out of top grades.
-export const FREEDOM_BAR_AT_AGE_38 = 0.50;
-
-// Age-scaled freedom bar. Linear in startAge, anchored at the constants
-// above, clamped to [FREEDOM_BAR_AT_AGE_38, TARGET_FREEDOM_AT_END_AGE] so a
-// (theoretical) start below 18 doesn't get a higher bar and a start past 38
-// doesn't drift below the floor. The slope is (0.65 - 0.50) / 20 = 0.0075
-// per year.
-export function freedomBarForStartAge(startAge: number): number {
-  const raw =
-    TARGET_FREEDOM_AT_END_AGE -
-    ((startAge - 18) / 20) *
-      (TARGET_FREEDOM_AT_END_AGE - FREEDOM_BAR_AT_AGE_38);
-  return Math.max(
-    FREEDOM_BAR_AT_AGE_38,
-    Math.min(TARGET_FREEDOM_AT_END_AGE, raw),
-  );
-}
+// Back-compat alias for callers reading TARGET_FREEDOM_AT_END_AGE. The
+// flat bar IS the target at end-age; keeping the older name pointing at
+// the same constant lets per-path sim harnesses keep their imports valid.
+export const TARGET_FREEDOM_AT_END_AGE = FREEDOM_BAR;
 
 // Concave freedom curve. exponent < 1 rewards early progress more than late,
 // so a player at ratio 0.30 (half the cap) earns roughly 73% of the points,
@@ -119,18 +102,12 @@ export function computeGrade(
   options?: GradeOptions,
 ): GradeResult {
   const w = GRADE_CONFIG.weights;
-  // Precedence: an explicit target arg always wins (the measurement harness
-  // uses this to sweep candidate bars). Otherwise read the player's start
-  // age via startPointId — the age-scaled bar credits shorter runways with
-  // a lower target so a 38-start isn't held to the same coverage as an
-  // 18-start. Legacy saves without startPointId fall back to 'university'
-  // (age 18), preserving the pre-Phase-3 0.65 ceiling for those rows.
+  // Precedence: an explicit target arg always wins (measurement harnesses
+  // use this to sweep candidate bars). Otherwise use the flat FREEDOM_BAR
+  // — every run is judged against the same coverage rubric regardless of
+  // start age.
   const ceiling =
-    target !== undefined && target > 0
-      ? target
-      : freedomBarForStartAge(
-          START_POINT_BY_ID[p.startPointId ?? 'university'].startAge,
-        );
+    target !== undefined && target > 0 ? target : FREEDOM_BAR;
   const exponent =
     options?.freedomExponent !== undefined && options.freedomExponent > 0
       ? options.freedomExponent

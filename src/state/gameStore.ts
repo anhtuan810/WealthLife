@@ -488,12 +488,24 @@ export const useGameStore = create<GameState>((set, get) => ({
         (p) => p.eventId !== s.currentEvent!.id,
       );
       const fromPending = s.currentEventFromPending;
+      // Update the CURRENT month's entry in place rather than appending.
+      // §13 contract: netWorthHistory holds one entry per recorded month
+      // (length === month + 1). The per-month entry was pushed by tick at
+      // month start; this choice resolves WITHIN that same month, so we
+      // overwrite the trailing value with the post-choice net worth. Keeps
+      // immediate visual feedback (sparkline moves the instant a choice
+      // resolves) without distorting the time axis the RunSummary chart
+      // uses to map index → age.
+      const nextHistory =
+        after.netWorthHistory.length > 0
+          ? [...after.netWorthHistory.slice(0, -1), snapshotNetWorth]
+          : [snapshotNetWorth];
 
       return {
         player: {
           ...after,
           pendingDecisions,
-          netWorthHistory: [...after.netWorthHistory, snapshotNetWorth],
+          netWorthHistory: nextHistory,
         },
         currentEvent: null,
         currentEventFromPending: false,

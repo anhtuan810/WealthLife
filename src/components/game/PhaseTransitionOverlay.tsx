@@ -8,7 +8,9 @@ import Animated, {
   withDelay,
   withTiming,
 } from 'react-native-reanimated';
+import { AmbientGlow } from '../AmbientGlow';
 import { HeroBackdrop } from '../visual/HeroBackdrop';
+import { hasArt } from '../../assets/art';
 import type { Phase } from '../../game/player';
 import { colors, motion, spacing, typography } from '../../theme';
 
@@ -64,15 +66,24 @@ export function PhaseTransitionOverlay({ phase, onDismiss }: Props) {
 
   if (!copy) return null;
 
+  const artKey = `phase_${phase}`;
+  const artRegistered = hasArt(artKey);
+
   return (
     <Pressable
-      style={StyleSheet.absoluteFill}
+      // SOLID bg fill is the floor of the overlay — when phase_growth /
+      // phase_freedom PNGs aren't yet registered, HeroBackdrop returns
+      // null and without this fill the dashboard bleeds through. The
+      // AmbientGlow below adds atmosphere for the art-missing case;
+      // HeroBackdrop's image layers over both when art IS present.
+      style={[StyleSheet.absoluteFill, styles.scrim]}
       onPress={() => {
         Haptics.selectionAsync();
         onDismiss();
       }}
     >
-      <HeroBackdrop assetKey={`phase_${phase}`} />
+      {!artRegistered ? <AmbientGlow /> : null}
+      <HeroBackdrop assetKey={artKey} />
 
       <View pointerEvents="none" style={styles.titleWrap}>
         <Animated.View style={titleStyle}>
@@ -89,6 +100,9 @@ export function PhaseTransitionOverlay({ phase, onDismiss }: Props) {
 }
 
 const styles = StyleSheet.create({
+  scrim: {
+    backgroundColor: colors.bg,
+  },
   titleWrap: {
     position: 'absolute',
     top: 96,

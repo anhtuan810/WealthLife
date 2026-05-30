@@ -9,12 +9,22 @@ import Animated, {
 } from 'react-native-reanimated';
 import { LinearGradient } from 'expo-linear-gradient';
 import { colors, radii, spacing, typography } from '../theme';
-import type { FoundationPath } from '../data/foundationPaths';
+import type { FoundationPath, FoundationPathId } from '../data/foundationPaths';
+import { StatGlyph, type StatGlyphName } from './visual/StatGlyph';
 
 type Props = {
   path: FoundationPath;
   selected: boolean;
   onSelect: () => void;
+};
+
+// One thematic glyph per foundation path — same Skia icon set the
+// start-point picker uses, so the two surfaces feel of a piece.
+const GLYPH_FOR_PATH: Record<FoundationPathId, StatGlyphName> = {
+  university: 'book',
+  vocational: 'wrench',
+  self_taught: 'compass',
+  straight_to_work: 'briefcase',
 };
 
 // Premium dark surface card for the §7 foundation-path picker.
@@ -57,14 +67,21 @@ export function FoundationPathCard({ path, selected, onSelect }: Props) {
           style={StyleSheet.absoluteFill}
         />
         <View style={styles.body}>
-          <Text style={styles.name}>{path.title}</Text>
-          <Text style={styles.vibe}>{path.subtitle}</Text>
-          <View style={styles.tagRow}>
-            {path.tags.map((t) => (
-              <View key={t} style={styles.tag}>
-                <Text style={styles.tagText}>{t}</Text>
-              </View>
-            ))}
+          <View style={styles.avatar}>
+            <StatGlyph
+              name={GLYPH_FOR_PATH[path.id]}
+              size={32}
+              color={colors.accent}
+            />
+          </View>
+          <View style={styles.copy}>
+            <Text style={styles.name}>{path.title}</Text>
+            <Text style={styles.vibe}>{path.subtitle}</Text>
+            {/* Tags collapsed into a single muted line — same visual weight
+                as the StartPointCard's runwayHint caption. Keeps three
+                tradeoff signals in view without the chip row's
+                vertical/wrap cost. */}
+            <Text style={styles.tagLine}>{path.tags.join('  ·  ')}</Text>
           </View>
         </View>
       </Animated.View>
@@ -85,35 +102,46 @@ const styles = StyleSheet.create({
     backgroundColor: colors.surface,
   },
   body: {
-    padding: spacing.lg,
-    gap: spacing.sm,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.md,
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.sm + 2,
+  },
+  // Soft accent-tinted disc behind the glyph — matches StartPointCard.
+  avatar: {
+    width: 48,
+    height: 48,
+    borderRadius: radii.pill,
+    backgroundColor: colors.accentSoft,
+    borderWidth: 1,
+    borderColor: colors.borderSoft,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  copy: {
+    flex: 1,
+    minWidth: 0,
+    gap: 2,
   },
   name: {
     ...typography.title,
     color: colors.textPrimary,
+    fontSize: 19,
   },
   vibe: {
     ...typography.body,
     color: colors.textSecondary,
+    fontSize: 14,
+    lineHeight: 19,
+    marginTop: 2,
   },
-  tagRow: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: spacing.sm,
-    marginTop: spacing.xs,
-  },
-  tag: {
-    paddingHorizontal: spacing.md,
-    paddingVertical: 5,
-    borderRadius: radii.pill,
-    borderWidth: 1,
-    borderColor: colors.borderSoft,
-    backgroundColor: 'rgba(245, 242, 234, 0.04)',
-  },
-  tagText: {
+  tagLine: {
     ...typography.caption,
-    color: colors.textSecondary,
-    letterSpacing: 1,
+    color: colors.textMuted,
+    fontSize: 10,
+    letterSpacing: 1.2,
+    marginTop: spacing.xs,
   },
   ring: {
     ...StyleSheet.absoluteFill,

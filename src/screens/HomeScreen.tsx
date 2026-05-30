@@ -89,6 +89,12 @@ export function HomeScreen() {
   const startPointCtaV = useSharedValue(0);
   const pathsCtaV = useSharedValue(0);
   const directionCtaV = useSharedValue(0);
+  // paths and direction are PEER stages (both STAGE_INDEX 2) — sharing
+  // stageV for opacity would make them both opaque at the same time and
+  // bleed through each other. Each gets its own boolean-style visibility
+  // value so only the active peer renders.
+  const pathsActiveV = useSharedValue(0);
+  const directionActiveV = useSharedValue(0);
 
   // Auto-clear silent-only lapses (same logic as before — opportunities with
   // no resultText shouldn't block the EventCard / phase overlay queue).
@@ -111,7 +117,15 @@ export function HomeScreen() {
       duration: 480,
       easing: Easing.inOut(Easing.cubic),
     });
-  }, [stage, stageV]);
+    pathsActiveV.value = withTiming(stage === 'paths' ? 1 : 0, {
+      duration: 480,
+      easing: Easing.inOut(Easing.cubic),
+    });
+    directionActiveV.value = withTiming(stage === 'direction' ? 1 : 0, {
+      duration: 480,
+      easing: Easing.inOut(Easing.cubic),
+    });
+  }, [stage, stageV, pathsActiveV, directionActiveV]);
 
   useEffect(() => {
     startPointCtaV.value = withTiming(selectedStartPoint ? 1 : 0, {
@@ -174,21 +188,17 @@ export function HomeScreen() {
     ],
   }));
 
+  // Each peer (paths / direction) animates against its OWN active value
+  // so only one is visible at a time. Slide-in from below + fade.
   const pathsLayerStyle = useAnimatedStyle(() => ({
-    opacity: interpolate(stageV.value, [1, 2, 3], [0, 1, 0], Extrapolation.CLAMP),
-    transform: [
-      {
-        translateY: interpolate(
-          stageV.value,
-          [1, 2, 3],
-          [22, 0, -18],
-          Extrapolation.CLAMP,
-        ),
-      },
-    ],
+    opacity: pathsActiveV.value,
+    transform: [{ translateY: (1 - pathsActiveV.value) * 18 }],
   }));
 
-  const directionLayerStyle = pathsLayerStyle; // identical curve; peer of paths
+  const directionLayerStyle = useAnimatedStyle(() => ({
+    opacity: directionActiveV.value,
+    transform: [{ translateY: (1 - directionActiveV.value) * 18 }],
+  }));
 
   const startPointCtaStyle = useAnimatedStyle(() => ({
     opacity: startPointCtaV.value,
@@ -267,12 +277,9 @@ export function HomeScreen() {
         >
           <View style={styles.stackHeader}>
             <Text style={styles.eyebrow}>CHOOSE WHERE YOU START</Text>
-            <Text style={styles.stackTitle}>
-              When does{'\n'}your story{'\n'}begin?
-            </Text>
+            <Text style={styles.stackTitle}>When does your{'\n'}story begin?</Text>
             <Text style={styles.stackLede}>
-              Less runway means harder choices; more runway means a gentler arc.
-              All four runs target freedom by 60.
+              Less runway, harder choices. All four runs target freedom by 60.
             </Text>
           </View>
 
@@ -305,7 +312,7 @@ export function HomeScreen() {
         >
           <View style={styles.pathsHeader}>
             <Text style={styles.eyebrow}>AGE 18 · CHOOSE YOUR FOUNDATION</Text>
-            <Text style={styles.pathsTitle}>How you{'\n'}start.</Text>
+            <Text style={styles.pathsTitle}>How you start.</Text>
             <Text style={styles.pathsLede}>
               Not who you become. Just where you stand the day you become an adult.
             </Text>
@@ -442,13 +449,19 @@ const styles = StyleSheet.create({
   },
   stackLayer: {
     justifyContent: 'flex-start',
-    gap: spacing.lg,
-    paddingBottom: spacing.xl,
+    // Tighter inset + gap than the title layer's hero treatment — the
+    // start-point picker needs all four cards visible without scrolling.
+    paddingTop: 64,
+    gap: spacing.md,
+    paddingBottom: spacing.lg,
   },
   pathsLayer: {
     justifyContent: 'flex-start',
-    gap: spacing.lg,
-    paddingBottom: spacing.xl,
+    // Match the start-point picker's compaction: tighter top inset + gap
+    // so all four foundation cards fit on one viewport without scroll.
+    paddingTop: 64,
+    gap: spacing.md,
+    paddingBottom: spacing.lg,
   },
   directionLayer: {
     justifyContent: 'flex-start',
@@ -456,20 +469,22 @@ const styles = StyleSheet.create({
     paddingBottom: spacing.xl,
   },
   stackHeader: {
-    gap: spacing.sm,
+    gap: spacing.xs,
   },
   stackTitle: {
     ...typography.hero,
     color: colors.textPrimary,
-    fontSize: 34,
-    lineHeight: 38,
+    fontSize: 26,
+    lineHeight: 30,
     marginTop: spacing.xs,
   },
   stackLede: {
     ...typography.body,
     color: colors.textSecondary,
-    maxWidth: 320,
-    marginTop: spacing.xs,
+    fontSize: 14,
+    lineHeight: 19,
+    maxWidth: 340,
+    marginTop: 2,
   },
   dashLayer: {
     paddingTop: 72,
@@ -502,26 +517,28 @@ const styles = StyleSheet.create({
     letterSpacing: 2.4,
   },
   pathsHeader: {
-    gap: spacing.sm,
+    gap: spacing.xs,
   },
   pathsTitle: {
     ...typography.hero,
     color: colors.textPrimary,
-    fontSize: 34,
-    lineHeight: 38,
+    fontSize: 26,
+    lineHeight: 30,
     marginTop: spacing.xs,
   },
   pathsLede: {
     ...typography.body,
     color: colors.textSecondary,
-    maxWidth: 320,
-    marginTop: spacing.xs,
+    fontSize: 14,
+    lineHeight: 19,
+    maxWidth: 340,
+    marginTop: 2,
   },
   cardScroll: {
     flex: 1,
   },
   cardStack: {
-    gap: spacing.md,
-    paddingBottom: spacing.xl,
+    gap: spacing.sm,
+    paddingBottom: spacing.md,
   },
 });

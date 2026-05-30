@@ -261,12 +261,21 @@ function driveRun(opts: DriveOpts): DriveResult {
         const choice = currentEvent.choices[idx] ?? currentEvent.choices[0];
         if (choice) {
           player = applyChoice(player, currentEvent, choice);
+          // Mirror gameStore.chooseOption: overwrite the current month's
+          // trailing entry rather than append, preserving the §13
+          // length === month + 1 invariant. The control/compressed paths
+          // BOTH apply this same overwrite, so their netWorthHistory arrays
+          // must still match byte-for-byte at end-of-run.
           const snapshotNet = Math.round(
             player.cash + player.assets + player.investments - player.debt,
           );
+          const nextHistory =
+            player.netWorthHistory.length > 0
+              ? [...player.netWorthHistory.slice(0, -1), snapshotNet]
+              : [snapshotNet];
           player = {
             ...player,
-            netWorthHistory: [...player.netWorthHistory, snapshotNet],
+            netWorthHistory: nextHistory,
           };
         }
         currentEvent = null;

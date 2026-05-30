@@ -26,7 +26,7 @@ import {
 import { colors, radii, spacing, typography } from '../theme';
 import { FOUNDATION_PATH_BY_ID } from '../data/foundationPaths';
 import { identityTitle } from '../data/directions';
-import { freedomPct, leaningFromFlags, netWorth, type Player } from '../game/player';
+import { freedomPct, leaningFromFlags, netWorth, type Phase, type Player } from '../game/player';
 import { useGameStore } from '../state/gameStore';
 import { CashFlowDetail } from './dashboard/CashFlowDetail';
 import { DebtDetail } from './dashboard/DebtDetail';
@@ -34,6 +34,21 @@ import { DetailSheet } from './dashboard/DetailSheet';
 import { projectedCashFlow } from '../game/cashFlow';
 import { ALL_EVENTS } from '../content';
 import { PENDING_DECISIONS_CAP } from '../data/constants';
+
+// Dashboard header title — phase-aware. The previous binding read
+// FOUNDATION_PATH_BY_ID[player.foundationPath].title for the lifetime of
+// the run, which (a) kept reading "University" past age 22 once the player
+// had crossed into career/growth/freedom, and (b) leaked the placeholder
+// "university" foundationPath that non-foundation starts carry (see
+// createPlayerFromStartPoint). Foundation phase still surfaces the chosen
+// path; every later phase uses a cinematic header that matches the
+// PhaseTransitionOverlay copy so the dashboard reads as a continuation of
+// the same act, not a fixed identity. FLAGGED FOR COPY CONFIRM.
+const PHASE_HEADER: Record<Exclude<Phase, 'foundation'>, string> = {
+  career: 'Career Years',
+  growth: 'Growth Years',
+  freedom: 'Freedom in sight',
+};
 
 const fmtMoney = (n: number) => {
   const sign = n < 0 ? '-' : '';
@@ -216,7 +231,7 @@ export function DashboardLayer() {
               : `AGE ${player.age} · MONTH ${player.month} · ${player.phase.toUpperCase()}`}
           </Text>
           <Text style={styles.title} numberOfLines={2}>
-            {path.title}
+            {player.phase === 'foundation' ? path.title : PHASE_HEADER[player.phase]}
           </Text>
         </View>
 
@@ -300,8 +315,13 @@ export function DashboardLayer() {
         <View style={styles.spark}>
           <View style={styles.sparkHeader}>
             <Text style={styles.sparkEyebrow}>NET WORTH · TRACK</Text>
+            {/* Show months from player.month — netWorthHistory.length
+                pushes an extra entry on every chooseOption snapshot in
+                addition to the per-tick push, so length drifts above
+                month+1 in clean play and the "mo" label stops matching
+                the number. The chart still consumes the full history. */}
             <Text style={styles.sparkMuted}>
-              {player.netWorthHistory.length} mo
+              {player.month} mo
             </Text>
           </View>
           <View style={styles.sparkArea}>

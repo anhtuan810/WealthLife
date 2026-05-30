@@ -57,13 +57,16 @@ export const START_POINTS: readonly StartPoint[] = [
     requiresDirection: false,
     setsFlags: [],
   },
-  // Phase-3 commit: derived from the Part-1 measurement sweep — median
-  // university-player state at the moment age reaches the start-point's
-  // age, across the full seeds × policies matrix. Salary verified as the
-  // raw derived value: choose_direction sets no salary effect, so
-  // pre-firing it for non-foundation starts does not suppress a
-  // commit-time salary bump. The seed therefore matches what a
-  // university player actually looks like the instant they cross 22.
+  // Phase-4 re-derivation: medians of the university-18 run forward
+  // through the RESCALED economy (ECONOMY_SCALE = 5), sampled the month
+  // the player crosses age 22 / 26, with Model-1 passive compounding
+  // active. Expenses, cash, liabilities, passive, and the six strengths
+  // are derived-as-is. SALARY is the one hand-tuned field: the raw
+  // derived salary stacks aggressively from foundation events and lands
+  // the savings rate at 62–70%; the brief target is 10–35%, so salary
+  // is set to the value that lands the savings rate inside the band
+  // given derived expenses. Phase 5 will likely re-tune foundation
+  // salary-grant magnitudes once playtests inform balance.
   {
     id: 'early',
     label: 'Early Career · 22',
@@ -74,19 +77,19 @@ export const START_POINTS: readonly StartPoint[] = [
     requiresDirection: true,
     setsFlags: ['started_early'],
     seed: {
-      salary: 1_575,
-      expenses: 580,
-      cash: 25_375,
-      assets: 0,
-      liabilities: 15_415,
-      passiveIncome: 83,
+      salary: 5_400,         // hand-tuned: (5400 − 4060) / 5400 ≈ 25% savings
+      expenses: 4_060,       // derived (real_estate +600 ≈ 14.8% coverage ✓)
+      cash: 157_947,         // derived
+      assets: 0,             // derived
+      liabilities: 107_902,  // derived
+      passiveIncome: 10,     // derived
       strengths: {
-        skill: 40,
-        network: 38,
-        reputation: 24,
-        discipline: 46,
-        riskTolerance: 21,
-        ambition: 39,
+        skill: 40,           // derived
+        network: 38,         // derived
+        reputation: 26,      // derived
+        discipline: 45,      // derived
+        riskTolerance: 15,   // derived
+        ambition: 37,        // derived
       },
     },
   },
@@ -99,20 +102,28 @@ export const START_POINTS: readonly StartPoint[] = [
     startPhase: 'career',
     requiresDirection: true,
     setsFlags: ['started_established'],
+    // Phase-4 close-out thin: the derived seed was the median of OPTIMIZING
+    // university players (cash 420k, passive 244, expenses 4230) — richer
+    // than a typical fresh 26-year-old. Under flat bar 0.65 that median
+    // saturated the freedom term (67% coverage → 50/50 pts) and produced
+    // 40 S / 14 A / 15 B / 3 C with median S (92) while the other starts
+    // landed median A around 75–88. Thinned to a plausible 26yo: less
+    // cash buffer, modestly higher expenses, lower starting passive.
+    // Strengths unchanged.
     seed: {
-      salary: 2_275,
-      expenses: 750,
-      cash: 108_740,
-      assets: 14_000,
-      liabilities: 23_829,
-      passiveIncome: 403,
+      salary: 6_500,         // hand-tuned: (6500 − 5000) / 6500 ≈ 23% savings
+      expenses: 5_000,       // hand-tuned: +18% over the derived 4230
+      cash: 200_000,         // hand-tuned: ~48% of derived 420k — realistic 26yo buffer
+      assets: 13_300,        // derived
+      liabilities: 139_189,  // derived
+      passiveIncome: 200,    // hand-tuned: down from derived 244
       strengths: {
-        skill: 55,
-        network: 57,
-        reputation: 40,
-        discipline: 71,
-        riskTolerance: 39,
-        ambition: 70,
+        skill: 54,           // derived
+        network: 57,         // derived
+        reputation: 40,      // derived
+        discipline: 72,      // derived
+        riskTolerance: 36,   // derived
+        ambition: 70,        // derived
       },
     },
   },
@@ -125,13 +136,20 @@ export const START_POINTS: readonly StartPoint[] = [
     startPhase: 'growth',
     requiresDirection: true,
     setsFlags: ['started_midlife'],
+    // Phase-4 hand-author (NOT sim-derived — no upstream content covers
+    // 26 → 38). Phase-4 close-out retune (flat-bar revert): under bar
+    // 0.65 the prior 9% start coverage locked midlife out of S; lifted
+    // to passive 1,200 / expenses 8,500 (14.1% start). Final midlife
+    // distribution under the flat 0.65 bar: 26 S / 46 A / 0 B / 0 C —
+    // modal A with S reachable, hard-but-fair. Mean coverage 50.0.
+    // PHASE-5 SANITY CHECK ME — extrapolations, not measured.
     seed: {
-      salary: 8_500,        // TODO_TUNE
-      expenses: 5_500,      // TODO_TUNE
-      cash: 35_000,         // TODO_TUNE
-      assets: 65_000,       // TODO_TUNE
-      liabilities: 12_000,  // TODO_TUNE — mortgage tail
-      passiveIncome: 350,   // TODO_TUNE
+      salary: 12_000,        // hand-authored: ~29% savings rate
+      expenses: 8_500,       // hand-authored: midlife life-stage cost-of-living
+      cash: 700_000,         // hand-authored: established 420k + 12y compounding
+      assets: 350_000,       // hand-authored: 12y of real-estate / portfolio build
+      liabilities: 200_000,  // hand-authored: mortgage tail at scale 7
+      passiveIncome: 1_200,  // hand-authored: start coverage ≈ 14.1%
       strengths: {
         skill: 58,          // TODO_TUNE
         network: 50,        // TODO_TUNE

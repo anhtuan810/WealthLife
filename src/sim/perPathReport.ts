@@ -298,13 +298,21 @@ export function driveRun(
       if (!choice) continue;
 
       player = applyChoice(player, event, choice);
-      // Mirror gameStore.chooseOption: snapshot net worth after the choice.
+      // Mirror gameStore.chooseOption: snapshot net worth after the choice
+      // by UPDATING the current month's trailing entry in place. §13
+      // contract: history holds one entry per month, so a choice resolved
+      // within month N overwrites the month-N entry tick already pushed,
+      // never appends.
       const snapshotNet = Math.round(
         player.cash + player.assets + player.investments - player.debt,
       );
+      const nextHistory =
+        player.netWorthHistory.length > 0
+          ? [...player.netWorthHistory.slice(0, -1), snapshotNet]
+          : [snapshotNet];
       player = {
         ...player,
-        netWorthHistory: [...player.netWorthHistory, snapshotNet],
+        netWorthHistory: nextHistory,
       };
       monthsSinceLastEvent = 0;
     }

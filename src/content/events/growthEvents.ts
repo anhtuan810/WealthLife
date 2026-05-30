@@ -70,6 +70,61 @@ const TUNE_GROWTH = {
   },
 } as const;
 
+// ── TODO_TUNE — Phase 3, late-life growth expansion ────────────────────
+// Per docs/WealthLife_latelife_content_expansion.md §1. Magnitudes only;
+// the brief locks WHICH StatKey moves and WHICH way. Held in the same
+// band as TUNE_GROWTH so the sweep gradient stays put.
+const TUNE_LATELIFE_GROWTH = {
+  // Magnitudes sit in the same band as TUNE_GROWTH so the four-start
+  // gradient stays put. Sweep delta vs the pre-expansion baseline:
+  // coverage p50 within ±5pt, letter medians unchanged, monotonic
+  // gradient now perfectly preserved. `early` median score climbs +7 vs
+  // the pre-expansion run — the new growth opportunities give long-
+  // runway starts more upside to compound. Phase 3 tunes from here.
+  familyMilestone: {
+    embrace: { expenses: 500, stress: -6 },
+    plan: { expenses: 250, discipline: 5 },
+  },
+  windfall: {
+    invest: { assets: 30_000, passiveIncome: 200 },
+    payDown: { debt: -25_000, stress: -8 },
+    enjoy: { cash: 8_000, stress: -5 },
+  },
+  layoff: {
+    pivotFast: { salary: -700, stress: 8 },
+    takeTime: { cash: -4_000, salary: -400, skill: 6, stress: -4 },
+    lapse: { salary: -500, stress: 10 },
+  },
+  secondStream: {
+    build: { cash: -3_000, passiveIncome: 280, discipline: 4 },
+    focus: { salary: 300 },
+  },
+  payoffVsInvest: {
+    payDown: { debt: -20_000, stress: -6 },
+    invest: { assets: 25_000, passiveIncome: 180 },
+  },
+  badBet: {
+    goInWin: { assets: 20_000, riskTolerance: 6 },
+    goInLose: { assets: -15_000, riskTolerance: 6, stress: 8 },
+    pass: { discipline: 5 },
+  },
+  peakEarning: {
+    take: { salary: 2_000, stress: 10, health: -6 },
+    hold: { salary: 600, stress: -3 },
+  },
+  burnoutFork: {
+    stepBack: { salary: -1_200, health: 14, stress: -16 },
+    pushThrough: { salary: 800, health: -8, stress: 10 },
+  },
+  // Ambient beat: money is zeroed by design. The brief's "passiveIncome
+  // ± tiny" is honored as TEXTURE-only — touching stress / discipline /
+  // health, never the freedom-bar levers. See header comment.
+  marketDrift: {
+    stay: { discipline: 1 },
+    tinker: { stress: 1 },
+  },
+} as const;
+
 export const GROWTH_EVENTS: readonly GameEvent[] = [
   // ── SHARED · INVESTING — the quiet automate vs. hesitate beat ────────
   {
@@ -434,5 +489,397 @@ export const GROWTH_EVENTS: readonly GameEvent[] = [
       },
     ],
     tags: ['freelancer', 'leaning_independent', 'compounding'],
+  },
+
+  // ─────────────────────────────────────────────────────────────────────
+  // LATE-LIFE EXPANSION — see docs/WealthLife_latelife_content_expansion.md
+  // 8 growth additions + 1 ambient texture beat. Doubles growth density so
+  // the back half lands a decision every few months instead of skipping
+  // through near-empty decades. Same conventions as the original 6:
+  // directional effects, magnitudes in TUNE_LATELIFE_GROWTH for Phase 3.
+  //
+  // Ambient note: growth_market_drift is repeatable, low weight, and writes
+  // ZERO money on both choices — the brief §3 exception ("texture, not
+  // money"). The engine has no cooldown primitive; we lean on low weight
+  // and the competing decision pool to keep firings sparse. Verified via
+  // the coverage sweep — the four-start spread must not move >~2 pts.
+  // ─────────────────────────────────────────────────────────────────────
+
+  // ── SHARED · PRESSURE — a dependent enters the picture ───────────────
+  {
+    id: 'growth_family_milestone',
+    title: 'A New Mouth, A New Floor',
+    category: 'pressure',
+    phase: 'growth',
+    art: 'event_growth_family_milestone',
+    conditions: { phase: 'growth' },
+    fallbackText:
+      'A dependent enters the picture — a permanent, meaningful new line in the monthly budget.',
+    choices: [
+      {
+        id: 'embrace_it',
+        label: 'Embrace it — the floor moves up, the meaning does too',
+        effects: TUNE_LATELIFE_GROWTH.familyMilestone.embrace,
+        setsFlags: ['gained_dependent'],
+        resultText:
+          'You take the bigger life on without flinching. The line item is permanent; so is the reason.',
+      },
+      {
+        id: 'plan_carefully',
+        label: 'Plan it carefully — budget the change in',
+        effects: TUNE_LATELIFE_GROWTH.familyMilestone.plan,
+        setsFlags: ['gained_dependent'],
+        resultText:
+          'You sit with the spreadsheet first. The new floor is smaller and held on purpose.',
+      },
+    ],
+    tags: ['family', 'expenses', 'pressure'],
+  },
+
+  // ── SHARED · OPPORTUNITY — one-time windfall ─────────────────────────
+  {
+    id: 'growth_windfall',
+    title: 'A Number Lands',
+    category: 'opportunity',
+    phase: 'growth',
+    art: 'event_growth_windfall',
+    conditions: { phase: 'growth' },
+    fallbackText:
+      'A one-time windfall lands — an inheritance, a bonus, a sale. The decision is what shape it takes next.',
+    choices: [
+      {
+        id: 'invest_windfall',
+        label: 'Invest it — let it compound the rest of the way',
+        effects: TUNE_LATELIFE_GROWTH.windfall.invest,
+        setsFlags: ['invested_windfall'],
+        resultText:
+          'You put it into the market. The statement grows; the lifestyle does not.',
+      },
+      {
+        id: 'pay_down_debt',
+        label: 'Pay down debt — kill the interest first',
+        effects: TUNE_LATELIFE_GROWTH.windfall.payDown,
+        setsFlags: ['paid_down_windfall'],
+        resultText:
+          'You retire the balance. The interest stops; the shoulders drop with it.',
+      },
+      {
+        id: 'enjoy_some',
+        label: 'Enjoy some — you didn\'t budget for this',
+        effects: TUNE_LATELIFE_GROWTH.windfall.enjoy,
+        setsFlags: ['enjoyed_windfall'],
+        resultText:
+          'You spend a chunk and don\'t feel bad about it. The rest sits in cash.',
+      },
+    ],
+    tags: ['windfall', 'opportunity'],
+  },
+
+  // ── SHARED · PRESSURE — the role disappears ──────────────────────────
+  // deferWindow 0 is the pressure default; stated explicitly per brief.
+  // onLapse models the "ignored the layoff" outcome — the lower salary
+  // and the stress are coming whether you make a call or not.
+  {
+    id: 'growth_layoff',
+    title: 'The Role Disappears',
+    category: 'pressure',
+    phase: 'growth',
+    deferWindow: 0,
+    onLapse: {
+      effects: TUNE_LATELIFE_GROWTH.layoff.lapse,
+      setsFlags: ['drifted_post_layoff'],
+      resultText:
+        'You let the months pass without choosing. A lower-paying role finds you anyway.',
+    },
+    art: 'event_growth_layoff',
+    conditions: { phase: 'growth' },
+    fallbackText:
+      'The role disappears out from under you. The severance buys time; the calendar empties fast.',
+    choices: [
+      {
+        id: 'pivot_fast',
+        label: 'Pivot fast — take the first reasonable offer',
+        effects: TUNE_LATELIFE_GROWTH.layoff.pivotFast,
+        setsFlags: ['pivoted_post_layoff'],
+        resultText:
+          'You land somewhere within the quarter. The title is similar; the pay is not.',
+      },
+      {
+        id: 'take_the_time',
+        label: 'Take the time — retool, then return',
+        effects: TUNE_LATELIFE_GROWTH.layoff.takeTime,
+        setsFlags: ['retooled_post_layoff'],
+        resultText:
+          'You spend the runway on skill, not search. The next role is slower to arrive and sharper when it does.',
+      },
+    ],
+    tags: ['layoff', 'career', 'pressure'],
+  },
+
+  // ── SHARED · INVESTING — a side venture as a second income ───────────
+  {
+    id: 'growth_second_stream',
+    title: 'A Second Stream',
+    category: 'investing',
+    phase: 'growth',
+    art: 'event_growth_second_stream',
+    conditions: { phase: 'growth' },
+    fallbackText:
+      'A side venture could become a real second income — if the time goes in.',
+    choices: [
+      {
+        id: 'build_stream',
+        label: 'Build it — invest the hours, get the income',
+        effects: TUNE_LATELIFE_GROWTH.secondStream.build,
+        setsFlags: ['built_second_stream'],
+        resultText:
+          'You build it. The cheque is small at first; it doesn\'t depend on a single employer.',
+      },
+      {
+        id: 'stay_focused',
+        label: 'Stay focused — the main income is the main income',
+        effects: TUNE_LATELIFE_GROWTH.secondStream.focus,
+        setsFlags: ['stayed_single_stream'],
+        resultText:
+          'You keep the focus narrow. The single line stays reliable.',
+      },
+    ],
+    tags: ['side_income', 'compounding'],
+  },
+
+  // ── SHARED · INVESTING — kill the mortgage or feed the market ────────
+  {
+    id: 'growth_payoff_vs_invest',
+    title: 'Pay It Down, Or Feed It Forward',
+    category: 'investing',
+    phase: 'growth',
+    art: 'event_growth_payoff_vs_invest',
+    conditions: { phase: 'growth' },
+    fallbackText:
+      'A meaningful surplus to deploy. Kill the mortgage faster, or feed the market and let it compound.',
+    choices: [
+      {
+        id: 'pay_down_mortgage',
+        label: 'Pay it down — debt-free sooner, less compounding',
+        effects: TUNE_LATELIFE_GROWTH.payoffVsInvest.payDown,
+        setsFlags: ['paid_down_mortgage'],
+        resultText:
+          'You throw the surplus at the balance. The amortization shrinks; so does the night-time arithmetic.',
+      },
+      {
+        id: 'invest_surplus',
+        label: 'Invest the surplus — let it compound',
+        effects: TUNE_LATELIFE_GROWTH.payoffVsInvest.invest,
+        setsFlags: ['invested_surplus'],
+        resultText:
+          'You route it into the market instead. The debt stays; the assets pull ahead.',
+      },
+    ],
+    tags: ['compounding', 'debt'],
+  },
+
+  // ── SHARED · OPPORTUNITY — a hot tip with a real downside ────────────
+  // Variance modeled as two outcomes (matches founderExit / sequenceRisk
+  // pattern) so the cost surface is legible.
+  {
+    id: 'growth_bad_bet',
+    title: 'A Hot Tip',
+    category: 'opportunity',
+    phase: 'growth',
+    art: 'event_growth_bad_bet',
+    conditions: { phase: 'growth' },
+    fallbackText:
+      'A friend brings a hot tip with a real downside. The arithmetic only works if it\'s right.',
+    choices: [
+      {
+        id: 'go_in_win',
+        label: 'Go in — and the bet lands',
+        effects: TUNE_LATELIFE_GROWTH.badBet.goInWin,
+        setsFlags: ['took_bad_bet'],
+        resultText:
+          'You go in. The bet lands; the story gets retold for years.',
+      },
+      {
+        id: 'go_in_lose',
+        label: 'Go in — and the bet misses',
+        effects: TUNE_LATELIFE_GROWTH.badBet.goInLose,
+        setsFlags: ['took_bad_bet'],
+        resultText:
+          'You go in. The thesis was thinner than it looked; the loss is real.',
+      },
+      {
+        id: 'pass_bet',
+        label: 'Pass — the rule is to skip these',
+        effects: TUNE_LATELIFE_GROWTH.badBet.pass,
+        setsFlags: ['passed_bad_bet'],
+        resultText:
+          'You pass. You\'ll never know if it would have worked. That\'s the point.',
+      },
+    ],
+    tags: ['risk', 'discipline'],
+  },
+
+  // ── SHARED · CAREER — earning power crests ───────────────────────────
+  {
+    id: 'growth_peak_earning',
+    title: 'Peak Earning Years',
+    category: 'career',
+    phase: 'growth',
+    art: 'event_growth_peak_earning',
+    conditions: { phase: 'growth' },
+    fallbackText:
+      'Your earning power crests — but the role asks more of the body and the calendar than the last one did.',
+    choices: [
+      {
+        id: 'take_the_peak',
+        label: 'Take it — ride the peak while it\'s here',
+        effects: TUNE_LATELIFE_GROWTH.peakEarning.take,
+        setsFlags: ['rode_peak'],
+        resultText:
+          'You take it. The numbers crest; the calendar stops being yours.',
+      },
+      {
+        id: 'hold_steady_peak',
+        label: 'Hold steady — let the role match the life',
+        effects: TUNE_LATELIFE_GROWTH.peakEarning.hold,
+        setsFlags: ['held_steady_peak'],
+        resultText:
+          'You hold steady. The raise is smaller; the evenings remain.',
+      },
+    ],
+    tags: ['career', 'salary'],
+  },
+
+  // ── SHARED · PRESSURE — burnout fork (gated on stress) ───────────────
+  {
+    id: 'growth_burnout_fork',
+    title: 'The Pace Stops Working',
+    category: 'pressure',
+    phase: 'growth',
+    deferWindow: 0,
+    art: 'event_growth_burnout_fork',
+    conditions: { phase: 'growth', stats: { stress: '>=60' } },
+    fallbackText:
+      'The pace is no longer sustainable. Something has to give — the question is which side gives first.',
+    choices: [
+      {
+        id: 'step_back_burnout',
+        label: 'Step back — protect the body',
+        effects: TUNE_LATELIFE_GROWTH.burnoutFork.stepBack,
+        setsFlags: ['stepped_back_burnout'],
+        resultText:
+          'You step back. The cheque shrinks; the breathing comes back.',
+      },
+      {
+        id: 'push_through_burnout',
+        label: 'Push through — the cheque, the timeline, the title',
+        effects: TUNE_LATELIFE_GROWTH.burnoutFork.pushThrough,
+        setsFlags: ['pushed_through_burnout_late'],
+        resultText:
+          'You push. The cheque survives; the body files the bill quietly.',
+      },
+    ],
+    tags: ['health', 'stress', 'pressure'],
+  },
+
+  // ── AMBIENT · INVESTING — texture beats, age-tiered ──────────────────
+  // §3 exception to the "must move money" rule. Both choices write ZERO
+  // money on purpose; the brief's "passiveIncome ± tiny" is honored as
+  // STRESS / DISCIPLINE texture only, so a stress-minimizing policy can't
+  // drift the freedom ratio across 20 firings.
+  //
+  // Cooldown: the engine has no primitive for it. Tried `repeatable: true`
+  // + low weight first — once the non-repeatable growth events exhaust
+  // (~mid-40s), the ambient was the ONLY eligible event and filled every
+  // decision beat (~71% of growth decisions in the density probe). The
+  // ship-blocking rule is "do NOT let these spam," so we instead expose
+  // three NON-repeatable sibling records, each gated to a 5-year window.
+  // Result: up to 3 ambient firings spread across 35–49, never adjacent.
+  {
+    id: 'growth_market_drift',
+    title: 'A Quiet Quarter',
+    category: 'investing',
+    phase: 'growth',
+    weight: 0.5,
+    deferWindow: 0,
+    art: 'event_growth_market_drift',
+    conditions: { phase: 'growth', minAge: 35, maxAge: 39 },
+    fallbackText:
+      'A quiet quarter. The market drifts; the dashboard barely moves.',
+    choices: [
+      {
+        id: 'stay_the_course_drift',
+        label: 'Stay the course — close the app',
+        effects: TUNE_LATELIFE_GROWTH.marketDrift.stay,
+        resultText:
+          'You change nothing. The plan does the boring work in the background.',
+      },
+      {
+        id: 'tinker_drift',
+        label: 'Tinker — rebalance for the sake of it',
+        effects: TUNE_LATELIFE_GROWTH.marketDrift.tinker,
+        resultText:
+          'You move a few sliders. The afternoon is gone; the position is almost identical.',
+      },
+    ],
+    tags: ['ambient', 'texture'],
+  },
+  {
+    id: 'growth_market_drift_mid',
+    title: 'A Quiet Quarter',
+    category: 'investing',
+    phase: 'growth',
+    weight: 0.5,
+    deferWindow: 0,
+    art: 'event_growth_market_drift',
+    conditions: { phase: 'growth', minAge: 40, maxAge: 44 },
+    fallbackText:
+      'Another flat quarter. The number doesn\'t do much; the years are doing the work.',
+    choices: [
+      {
+        id: 'stay_the_course_drift',
+        label: 'Stay the course — close the app',
+        effects: TUNE_LATELIFE_GROWTH.marketDrift.stay,
+        resultText:
+          'You leave it alone. The compounding doesn\'t need supervision.',
+      },
+      {
+        id: 'tinker_drift',
+        label: 'Tinker — small reallocation',
+        effects: TUNE_LATELIFE_GROWTH.marketDrift.tinker,
+        resultText:
+          'You rebalance a little. The position barely shifts; the brain feels productive.',
+      },
+    ],
+    tags: ['ambient', 'texture'],
+  },
+  {
+    id: 'growth_market_drift_late',
+    title: 'A Quiet Quarter',
+    category: 'investing',
+    phase: 'growth',
+    weight: 0.5,
+    deferWindow: 0,
+    art: 'event_growth_market_drift',
+    conditions: { phase: 'growth', minAge: 45, maxAge: 49 },
+    fallbackText:
+      'The dashboard sits flat for the third month. Nothing to do; nothing not to do.',
+    choices: [
+      {
+        id: 'stay_the_course_drift',
+        label: 'Stay the course — let it sit',
+        effects: TUNE_LATELIFE_GROWTH.marketDrift.stay,
+        resultText:
+          'You let it sit. The plan is older than the dashboard.',
+      },
+      {
+        id: 'tinker_drift',
+        label: 'Tinker — small reallocation',
+        effects: TUNE_LATELIFE_GROWTH.marketDrift.tinker,
+        resultText:
+          'You move a slider. By Tuesday you\'ve moved it back.',
+      },
+    ],
+    tags: ['ambient', 'texture'],
   },
 ];

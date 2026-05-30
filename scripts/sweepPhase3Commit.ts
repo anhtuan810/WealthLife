@@ -37,7 +37,7 @@ import {
 import { decideBeat } from '../src/systems/pacingController';
 import {
   computeGrade,
-  freedomBarForStartAge,
+  FREEDOM_BAR,
   type GradeLetter,
 } from '../src/systems/grade';
 import { POLICIES } from '../src/sim/policies';
@@ -294,8 +294,8 @@ function medianLetter(letters: GradeLetter[]): GradeLetter {
 // ── reporting ──────────────────────────────────────────────────────────
 log('# PHASE-3 COMMIT — POST-CHANGE SWEEP');
 log('');
-log('  Grade reads age-scaled freedomBarForStartAge() — no explicit target arg.');
-log(`  bar(18)=${freedomBarForStartAge(18).toFixed(2)}  bar(22)=${freedomBarForStartAge(22).toFixed(2)}  bar(26)=${freedomBarForStartAge(26).toFixed(2)}  bar(38)=${freedomBarForStartAge(38).toFixed(2)}`);
+log('  Grade reads flat FREEDOM_BAR — same coverage rubric for every start.');
+log(`  FREEDOM_BAR = ${FREEDOM_BAR.toFixed(2)}`);
 log('');
 
 // Coverage spread per start.
@@ -327,7 +327,7 @@ for (const sp of startOrder) {
 log('');
 
 // Grade histogram per start.
-log('## grade histogram + median letter per start (shipped age-scaled bar)');
+log('## grade histogram + median letter per start (shipped flat bar)');
 log(`  ${pad('start', 12)} ${padL('n', 4)}  ${padL('S', 4)} ${padL('A', 4)} ${padL('B', 4)} ${padL('C', 4)} ${padL('D', 4)}  ${pad('median', 8)} ${padL('median score', 13)}`);
 const histByStart: Record<StartPointId, Histogram> = {
   university: emptyHist(),

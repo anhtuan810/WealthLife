@@ -6,6 +6,13 @@
 // class. It biases — but does not lock — the strength profile. Strengths
 // (skill / network / reputation / discipline / riskTolerance / ambition) are
 // 0–100 and will be reshaped by foundation-chapter decisions in later prompts.
+//
+// Phase-4 economy rescale: cash / debt / salary / expenses baselines are
+// wrapped in $$ from economyScale.ts so a single ECONOMY_SCALE constant
+// drives the foundation chapter's dollar scale. Strengths / stress / health
+// are untouched — only money fields scale.
+
+import { $$ } from './economyScale';
 
 export type FoundationPathId =
   | 'university'
@@ -51,10 +58,10 @@ export const FOUNDATION_PATHS: readonly FoundationPath[] = [
     subtitle: 'You bet four years and real debt on a higher ceiling.',
     tags: ['Debt risk', 'Slow start', 'Network upside'],
     baseline: {
-      cash: 1_500,
-      debt: 8_000,        // first-year loan already on the books
-      salary: 0,          // full-time student, no income yet
-      expenses: 900,
+      cash: $$(1_500),
+      debt: $$(8_000),    // first-year loan already on the books
+      salary: $$(0),      // full-time student, no income yet
+      expenses: $$(900),
       investments: 0,
       assets: 0,
       passiveIncome: 0,
@@ -74,10 +81,10 @@ export const FOUNDATION_PATHS: readonly FoundationPath[] = [
     subtitle: 'You pick up a trade fast and start earning while peers study.',
     tags: ['Early income', 'Low debt', 'Narrow ceiling'],
     baseline: {
-      cash: 2_200,
-      debt: 2_000,        // small program fees
-      salary: 1_200,      // apprentice / part-time trade wages
-      expenses: 800,
+      cash: $$(2_200),
+      debt: $$(2_000),    // small program fees
+      salary: $$(1_200),  // apprentice / part-time trade wages
+      expenses: $$(800),
       investments: 0,
       assets: 0,
       passiveIncome: 0,
@@ -97,10 +104,10 @@ export const FOUNDATION_PATHS: readonly FoundationPath[] = [
     subtitle: 'You skip the system and try to outlearn it on your own terms.',
     tags: ['No debt', 'Unstable income', 'High variance'],
     baseline: {
-      cash: 1_200,
-      debt: 0,
-      salary: 600,        // gig / freelance scraps
-      expenses: 700,
+      cash: $$(1_200),
+      debt: $$(0),
+      salary: $$(600),    // gig / freelance scraps
+      expenses: $$(700),
       investments: 0,
       assets: 0,
       passiveIncome: 0,
@@ -120,10 +127,10 @@ export const FOUNDATION_PATHS: readonly FoundationPath[] = [
     subtitle: 'You trade the long game for a paycheck and independence today.',
     tags: ['Immediate income', 'Low ceiling', 'Real independence'],
     baseline: {
-      cash: 1_800,
-      debt: 500,          // a stray card balance
-      salary: 1_800,      // full-time entry-level wage
-      expenses: 950,      // rent on your own quickly
+      cash: $$(1_800),
+      debt: $$(500),      // a stray card balance
+      salary: $$(1_800),  // full-time entry-level wage
+      expenses: $$(950),  // rent on your own quickly
       investments: 0,
       assets: 0,
       passiveIncome: 0,

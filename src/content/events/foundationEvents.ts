@@ -25,6 +25,7 @@
 
 import type { GameEvent } from '../../types/events';
 
+import { $$ } from '../../data/economyScale';
 export const FOUNDATION_EVENTS: readonly GameEvent[] = [
   // ───────────────────────────────────────────────────────────────────────
   // EARLY  (18–19) — formative
@@ -39,7 +40,7 @@ export const FOUNDATION_EVENTS: readonly GameEvent[] = [
     // Lapse: the unpaid balance the comply choice (take_loan, +6000 debt) would
     // have financed, plus a 15% late fee → +6900 debt.
     onLapse: {
-      effects: { debt: 6900, stress: 4 },
+      effects: { debt: $$(6900), stress: 4 },
       setsFlags: ['missed_tuition'],
       resultText:
         'You let the tuition deadline slide — the unpaid balance, plus a late fee, was added to your debt.',
@@ -57,7 +58,7 @@ export const FOUNDATION_EVENTS: readonly GameEvent[] = [
       {
         id: 'take_loan',
         label: 'Take the loan and focus on studies',
-        effects: { cash: 6000, debt: 6000, skill: 5, stress: 6 },
+        effects: { cash: $$(6000), debt: $$(6000), skill: 5, stress: 6 },
         setsFlags: ['took_big_loan'],
         resultText:
           'You sign for the maximum. The number on the paperwork is real; so is the runway it buys.',
@@ -65,7 +66,7 @@ export const FOUNDATION_EVENTS: readonly GameEvent[] = [
       {
         id: 'work_part',
         label: 'Work nights to keep the debt down',
-        effects: { cash: 600, debt: 1500, stress: 12, skill: -2 },
+        effects: { cash: $$(600), debt: $$(1500), stress: 12, skill: -2 },
         setsFlags: ['worked_through_school'],
         resultText:
           'You take the night job. The debt slows; the sleep does too.',
@@ -73,7 +74,7 @@ export const FOUNDATION_EVENTS: readonly GameEvent[] = [
       {
         id: 'cheaper_path',
         label: 'Transfer to a cheaper local program',
-        effects: { debt: 1500, network: -4, stress: -4 },
+        effects: { debt: $$(1500), network: -4, stress: -4 },
         setsFlags: ['took_cheaper_path'],
         resultText:
           'You transfer before the term starts. The lecturers are quieter; so are the contacts.',
@@ -101,7 +102,7 @@ export const FOUNDATION_EVENTS: readonly GameEvent[] = [
       {
         id: 'accept_scholarship',
         label: 'Accept the award and the renewal clause',
-        effects: { debt: -4000, stress: 4, discipline: 5 },
+        effects: { debt: $$(-4000), stress: 4, discipline: 5 },
         setsFlags: ['on_scholarship'],
         resultText:
           'You sign. The debt eases; the bar moves up every term.',
@@ -109,7 +110,7 @@ export const FOUNDATION_EVENTS: readonly GameEvent[] = [
       {
         id: 'partial_accept_negotiate',
         label: 'Negotiate a smaller no-strings award',
-        effects: { debt: -2000, network: 2, reputation: 3 },
+        effects: { debt: $$(-2000), network: 2, reputation: 3 },
         resultText:
           'You talk the office into a smaller cheque without the renewal clause.',
       },
@@ -181,7 +182,7 @@ export const FOUNDATION_EVENTS: readonly GameEvent[] = [
       {
         id: 'accept_help',
         label: 'Accept the monthly cheque',
-        effects: { cash: 1500, expenses: -200, ambition: -4 },
+        effects: { cash: $$(1500), expenses: $$(-200), ambition: -4 },
         setsFlags: ['accepted_parental_help'],
         resultText:
           'You accept. The numbers ease; something in you quiets too.',
@@ -189,7 +190,7 @@ export const FOUNDATION_EVENTS: readonly GameEvent[] = [
       {
         id: 'accept_small_amount',
         label: 'Accept a smaller amount with an end date',
-        effects: { cash: 500, expenses: -80, discipline: 2 },
+        effects: { cash: $$(500), expenses: $$(-80), discipline: 2 },
         setsFlags: ['accepted_parental_help'],
         resultText:
           'You agree to a smaller monthly amount and a clear end date.',
@@ -218,14 +219,14 @@ export const FOUNDATION_EVENTS: readonly GameEvent[] = [
       {
         id: 'cheap_room',
         label: 'Cheap room, quiet street',
-        effects: { cash: 200, expenses: -120, network: -5, stress: -2, discipline: 1 },
+        effects: { cash: $$(200), expenses: $$(-120), network: -5, stress: -2, discipline: 1 },
         resultText:
           'You take the room. It\'s quiet, far, and easy on the runway.',
       },
       {
         id: 'hub_share',
         label: 'Share a place near the scene',
-        effects: { cash: -150, expenses: 150, network: 8, reputation: 3, stress: 3 },
+        effects: { cash: $$(-150), expenses: $$(150), network: 8, reputation: 3, stress: 3 },
         setsFlags: ['lives_in_hub'],
         resultText:
           'You move into the share house. The fridge is chaotic; the people are useful.',
@@ -233,7 +234,7 @@ export const FOUNDATION_EVENTS: readonly GameEvent[] = [
       {
         id: 'move_home',
         label: 'Move back in with family',
-        effects: { expenses: -250, ambition: -3, network: -3, discipline: 2, stress: -3 },
+        effects: { expenses: $$(-250), ambition: -3, network: -3, discipline: 2, stress: -3 },
         resultText:
           'You move back. The runway lengthens; the ceiling lowers a notch.',
       },
@@ -259,7 +260,7 @@ export const FOUNDATION_EVENTS: readonly GameEvent[] = [
       {
         id: 'take_library',
         label: 'Take the library badge',
-        effects: { salary: 550, stress: 3, discipline: 3 },
+        effects: { salary: $$(550), stress: 3, discipline: 3 },
         setsFlags: ['worked_through_school'],
         resultText:
           'You take the badge. The numbers move; so do your weekends.',
@@ -267,7 +268,7 @@ export const FOUNDATION_EVENTS: readonly GameEvent[] = [
       {
         id: 'chase_bar_money',
         label: 'Chase higher pay at the campus bar',
-        effects: { salary: 750, stress: 7, health: -4 },
+        effects: { salary: $$(750), stress: 7, health: -4 },
         setsFlags: ['worked_through_school'],
         resultText:
           'You take the bar job instead. More money, later nights.',
@@ -301,7 +302,7 @@ export const FOUNDATION_EVENTS: readonly GameEvent[] = [
       {
         id: 'accept_apprenticeship',
         label: 'Sign the apprenticeship contract',
-        effects: { salary: 500, skill: 7, discipline: 4, stress: 3 },
+        effects: { salary: $$(500), skill: 7, discipline: 4, stress: 3 },
         setsFlags: ['has_apprenticeship'],
         resultText:
           'You sign. The cuts on your hands say the skill is real.',
@@ -309,14 +310,14 @@ export const FOUNDATION_EVENTS: readonly GameEvent[] = [
       {
         id: 'chase_solo_gigs',
         label: 'Chase solo jobs from day one',
-        effects: { salary: 300, riskTolerance: 5, network: -2 },
+        effects: { salary: $$(300), riskTolerance: 5, network: -2 },
         resultText:
           'You hunt your own jobs from the start. Some weeks pay; some don\'t.',
       },
       {
         id: 'take_warehouse_instead',
         label: 'Take a steady warehouse role instead',
-        effects: { salary: 400, skill: -2, stress: 2 },
+        effects: { salary: $$(400), skill: -2, stress: 2 },
         resultText:
           'You take the warehouse role. Steady money, nothing to learn.',
       },
@@ -342,7 +343,7 @@ export const FOUNDATION_EVENTS: readonly GameEvent[] = [
       {
         id: 'accept_client',
         label: 'Take the job at their rate',
-        effects: { cash: 800, salary: 300, skill: 5, reputation: 4 },
+        effects: { cash: $$(800), salary: $$(300), skill: 5, reputation: 4 },
         setsFlags: ['has_first_client'],
         resultText:
           'You take it. The deposit hits; the doubt fades a little.',
@@ -350,7 +351,7 @@ export const FOUNDATION_EVENTS: readonly GameEvent[] = [
       {
         id: 'counter_higher_rate',
         label: 'Counter at a higher rate',
-        effects: { cash: 1100, salary: 350, network: -3, reputation: 6 },
+        effects: { cash: $$(1100), salary: $$(350), network: -3, reputation: 6 },
         setsFlags: ['has_first_client'],
         resultText:
           'You counter. Half the agency walks away; the half that didn\'t, paid more.',
@@ -384,7 +385,7 @@ export const FOUNDATION_EVENTS: readonly GameEvent[] = [
       {
         id: 'take_overtime_track',
         label: 'Sign up for the overtime track',
-        effects: { salary: 500, cash: 600, stress: 8, health: -5 },
+        effects: { salary: $$(500), cash: $$(600), stress: 8, health: -5 },
         setsFlags: ['grinding_overtime'],
         resultText:
           'You take the overtime track. The cheques get fatter; so does the fatigue.',
@@ -392,14 +393,14 @@ export const FOUNDATION_EVENTS: readonly GameEvent[] = [
       {
         id: 'standard_rota',
         label: 'Take the standard rota',
-        effects: { salary: 250, discipline: 2, stress: 3 },
+        effects: { salary: $$(250), discipline: 2, stress: 3 },
         resultText:
           'You take the standard rota. Stable, slow, sustainable.',
       },
       {
         id: 'aim_at_supervisor',
         label: 'Aim at the supervisor track',
-        effects: { salary: 350, skill: 4, network: 3, stress: 5 },
+        effects: { salary: $$(350), skill: 4, network: 3, stress: 5 },
         setsFlags: ['supervisor_track'],
         resultText:
           'You aim at the supervisor role. The floor manager notices.',
@@ -426,7 +427,7 @@ export const FOUNDATION_EVENTS: readonly GameEvent[] = [
       {
         id: 'build_it',
         label: 'Build the thing',
-        effects: { cash: -200, skill: 6, network: 4, stress: 5 },
+        effects: { cash: $$(-200), skill: 6, network: 4, stress: 5 },
         setsFlags: ['has_side_business'],
         resultText:
           'You build it on evenings. The first version is ugly; the friend pays anyway.',
@@ -434,14 +435,14 @@ export const FOUNDATION_EVENTS: readonly GameEvent[] = [
       {
         id: 'grind_hours',
         label: 'Grind hours, bank the cash',
-        effects: { cash: 500, stress: 6, skill: -1 },
+        effects: { cash: $$(500), stress: 6, skill: -1 },
         resultText:
           'You take the extra shifts. The cheque is fatter; the calendar isn\'t yours.',
       },
       {
         id: 'learn_first',
         label: 'Spend the hours learning',
-        effects: { cash: -100, skill: 5, discipline: 2, network: -1 },
+        effects: { cash: $$(-100), skill: 5, discipline: 2, network: -1 },
         resultText:
           'You spend the hours reading and shipping practice work. Nothing earns yet.',
       },
@@ -468,7 +469,7 @@ export const FOUNDATION_EVENTS: readonly GameEvent[] = [
       {
         id: 'accept_internship',
         label: 'Take the internship in another city',
-        effects: { cash: 4000, salary: 200, skill: 6, network: 8, reputation: 5, stress: 7 },
+        effects: { cash: $$(4000), salary: $$(200), skill: 6, network: 8, reputation: 5, stress: 7 },
         setsFlags: ['interned_bigco'],
         resultText:
           'You move cities for the summer. The badge means more than the pay.',
@@ -483,7 +484,7 @@ export const FOUNDATION_EVENTS: readonly GameEvent[] = [
       {
         id: 'build_summer_project',
         label: 'Skip it — build your own thing instead',
-        effects: { cash: -300, skill: 7, discipline: 4, stress: 4 },
+        effects: { cash: $$(-300), skill: 7, discipline: 4, stress: 4 },
         setsFlags: ['has_side_business'],
         resultText:
           'You build instead. No badge, just a thing that runs.',
@@ -511,7 +512,7 @@ export const FOUNDATION_EVENTS: readonly GameEvent[] = [
       {
         id: 'study_hard',
         label: 'Lock down evenings and study',
-        effects: { skill: 8, salary: 400, stress: 6, discipline: 4 },
+        effects: { skill: 8, salary: $$(400), stress: 6, discipline: 4 },
         setsFlags: ['has_certification'],
         resultText:
           'You pass on the first try. Your rate goes up the next pay cycle.',
@@ -519,14 +520,14 @@ export const FOUNDATION_EVENTS: readonly GameEvent[] = [
       {
         id: 'coast_through',
         label: 'Coast through and hope for a pass',
-        effects: { skill: 2, salary: 100, stress: -2 },
+        effects: { skill: 2, salary: $$(100), stress: -2 },
         resultText:
           'You squeak by. Same job, marginally more money.',
       },
       {
         id: 'specialize_advanced',
         label: 'Take the advanced specialization track',
-        effects: { skill: 10, salary: 600, debt: 1500, stress: 8 },
+        effects: { skill: 10, salary: $$(600), debt: $$(1500), stress: 8 },
         setsFlags: ['has_certification'],
         resultText:
           'You take the advanced track and a small loan. The ceiling lifts.',
@@ -554,14 +555,14 @@ export const FOUNDATION_EVENTS: readonly GameEvent[] = [
       {
         id: 'raise_rate_take_job',
         label: 'Raise the rate and take it',
-        effects: { cash: 1200, salary: 350, reputation: 4 },
+        effects: { cash: $$(1200), salary: $$(350), reputation: 4 },
         resultText:
           'You raise the rate and they pay it. You quietly recalibrate everything.',
       },
       {
         id: 'keep_rate_keep_volume',
         label: 'Hold the rate, earn the loyalty',
-        effects: { cash: 800, salary: 200, network: 5 },
+        effects: { cash: $$(800), salary: $$(200), network: 5 },
         resultText:
           'You hold the rate and earn the loyalty. Two clients, both happy.',
       },
@@ -590,7 +591,7 @@ export const FOUNDATION_EVENTS: readonly GameEvent[] = [
       {
         id: 'work_the_room',
         label: 'Stay late and work the room',
-        effects: { cash: -50, network: 6, reputation: 3, stress: 4 },
+        effects: { cash: $$(-50), network: 6, reputation: 3, stress: 4 },
         resultText:
           'You stay until the lights come on. Three numbers in your phone you didn\'t have before.',
       },
@@ -633,7 +634,7 @@ export const FOUNDATION_EVENTS: readonly GameEvent[] = [
       {
         id: 'pay_for_their_time',
         label: 'Insist on paying for their time',
-        effects: { cash: -400, reputation: 2, ambition: 3, network: 3 },
+        effects: { cash: $$(-400), reputation: 2, ambition: 3, network: 3 },
         setsFlags: ['has_mentor'],
         resultText:
           'You insist on paying for their time. The relationship is sharper for it.',
@@ -662,7 +663,7 @@ export const FOUNDATION_EVENTS: readonly GameEvent[] = [
       {
         id: 'broad_index_monthly',
         label: 'Auto-buy a broad index every month',
-        effects: { cash: -500, investments: 500, passiveIncome: 25, discipline: 4 },
+        effects: { cash: $$(-500), investments: $$(500), passiveIncome: $$(25), discipline: 4 },
         setsFlags: ['has_brokerage'],
         resultText:
           'You set a monthly auto-buy. Boring, durable.',
@@ -670,7 +671,7 @@ export const FOUNDATION_EVENTS: readonly GameEvent[] = [
       {
         id: 'pick_a_few_stocks',
         label: 'Pick a few names yourself',
-        effects: { cash: -500, investments: 400, passiveIncome: 20, riskTolerance: 6, stress: 3 },
+        effects: { cash: $$(-500), investments: $$(400), passiveIncome: $$(20), riskTolerance: 6, stress: 3 },
         setsFlags: ['has_brokerage'],
         resultText:
           'You pick a few names yourself. The dopamine hits before the dividends.',
@@ -704,7 +705,7 @@ export const FOUNDATION_EVENTS: readonly GameEvent[] = [
       {
         id: 'double_down',
         label: 'Cut other commitments and push',
-        effects: { cash: -400, skill: 5, network: 4, stress: 6, ambition: 5 },
+        effects: { cash: $$(-400), skill: 5, network: 4, stress: 6, ambition: 5 },
         setsFlags: ['serious_side_project'],
         resultText:
           'You cut your other commitments and push. The thing starts to look real.',
@@ -712,14 +713,14 @@ export const FOUNDATION_EVENTS: readonly GameEvent[] = [
       {
         id: 'keep_lite_touch',
         label: 'Hold it at evenings and weekends',
-        effects: { cash: 200, salary: 150, discipline: 3 },
+        effects: { cash: $$(200), salary: $$(150), discipline: 3 },
         resultText:
           'You hold it at evenings-and-weekends. Slow but solvent.',
       },
       {
         id: 'pivot_to_services',
         label: 'Pivot into a small consulting line',
-        effects: { cash: 800, salary: 300, network: 4, reputation: 3 },
+        effects: { cash: $$(800), salary: $$(300), network: 4, reputation: 3 },
         setsFlags: ['services_side_business'],
         resultText:
           'You turn it into a consulting line. Less leverage, more cash.',
@@ -737,7 +738,7 @@ export const FOUNDATION_EVENTS: readonly GameEvent[] = [
     // Lapse: 10% penalty on the scheduled repayment the comply choice
     // (start_paying_now, -1500 cash → -1500 debt) targets → +150 debt.
     onLapse: {
-      effects: { debt: 150, stress: 4 },
+      effects: { debt: $$(150), stress: 4 },
       setsFlags: ['missed_loan_payment'],
       resultText:
         'You skipped the repayment. A penalty was tacked onto what you owe.',
@@ -756,21 +757,21 @@ export const FOUNDATION_EVENTS: readonly GameEvent[] = [
       {
         id: 'start_paying_now',
         label: 'Start chipping at the balance',
-        effects: { cash: -1500, debt: -1500, stress: 4, discipline: 5 },
+        effects: { cash: $$(-1500), debt: $$(-1500), stress: 4, discipline: 5 },
         resultText:
           'You start chipping at it. The number moves; the weight stays.',
       },
       {
         id: 'pay_minimum',
         label: 'Pay the minimum and move on',
-        effects: { cash: -300, debt: -200, stress: 6 },
+        effects: { cash: $$(-300), debt: $$(-200), stress: 6 },
         resultText:
           'You pay the minimum. Interest keeps doing its work in the dark.',
       },
       {
         id: 'defer_legally',
         label: 'Defer using a hardship clause',
-        effects: { stress: 3, debt: 800 },
+        effects: { stress: 3, debt: $$(800) },
         setsFlags: ['deferred_loan'],
         resultText:
           'You defer using a hardship clause. The debt grows quietly while you focus.',
@@ -797,21 +798,21 @@ export const FOUNDATION_EVENTS: readonly GameEvent[] = [
       {
         id: 'ride_it',
         label: 'Ride it out for the cheque',
-        effects: { cash: 1500, salary: 200, stress: 10, health: -7 },
+        effects: { cash: $$(1500), salary: $$(200), stress: 10, health: -7 },
         resultText:
           'You ride it out for the cheque. By December you don\'t remember December.',
       },
       {
         id: 'push_back_quietly',
         label: 'Push back quietly and trade shifts',
-        effects: { salary: 100, reputation: -2, stress: 3 },
+        effects: { salary: $$(100), reputation: -2, stress: 3 },
         resultText:
           'You quietly trade shifts and refuse extras. The supervisor notices.',
       },
       {
         id: 'overtime_to_upskill',
         label: 'Ride part of it; use the cash to upskill',
-        effects: { cash: 800, salary: 150, skill: 5, stress: 6 },
+        effects: { cash: $$(800), salary: $$(150), skill: 5, stress: 6 },
         resultText:
           'You ride some of it and use the cash to enrol in a night course.',
       },
@@ -880,7 +881,7 @@ export const FOUNDATION_EVENTS: readonly GameEvent[] = [
       {
         id: 'accept_acquihire',
         label: 'Sign — take the cash and a salary',
-        effects: { cash: 2500, salary: 700, network: 6, ambition: -3, riskTolerance: -3 },
+        effects: { cash: $$(2500), salary: $$(700), network: 6, ambition: -3, riskTolerance: -3 },
         setsFlags: ['sold_business'],
         resultText:
           'You sign. The runway lengthens; the thing you built isn\'t yours anymore.',
@@ -888,7 +889,7 @@ export const FOUNDATION_EVENTS: readonly GameEvent[] = [
       {
         id: 'counter_higher',
         label: 'Counter for a better number',
-        effects: { cash: 1500, salary: 650, network: 4, reputation: 3, stress: 4 },
+        effects: { cash: $$(1500), salary: $$(650), network: 4, reputation: 3, stress: 4 },
         setsFlags: ['sold_business'],
         resultText:
           'You counter. They squeeze, you squeeze; everyone signs annoyed.',
@@ -923,7 +924,7 @@ export const FOUNDATION_EVENTS: readonly GameEvent[] = [
       {
         id: 'accept_offer',
         label: 'Sign the full-time offer',
-        effects: { cash: 1500, salary: 700, network: 5, reputation: 5, ambition: 4 },
+        effects: { cash: $$(1500), salary: $$(700), network: 5, reputation: 5, ambition: 4 },
         setsFlags: ['big_company_employee'],
         resultText:
           'You sign. Onboarding starts the week after finals.',
@@ -931,7 +932,7 @@ export const FOUNDATION_EVENTS: readonly GameEvent[] = [
       {
         id: 'negotiate_remote',
         label: 'Negotiate a remote start',
-        effects: { cash: 1200, salary: 600, network: 3, reputation: 4 },
+        effects: { cash: $$(1200), salary: $$(600), network: 3, reputation: 4 },
         setsFlags: ['big_company_employee'],
         resultText:
           'You negotiate a remote start and lose some signing money. Worth it.',
@@ -967,7 +968,7 @@ export const FOUNDATION_EVENTS: readonly GameEvent[] = [
       {
         id: 'accept_retainer',
         label: 'Take the retainer',
-        effects: { cash: 800, salary: 500, stress: 3, discipline: 3 },
+        effects: { cash: $$(800), salary: $$(500), stress: 3, discipline: 3 },
         setsFlags: ['has_retainer'],
         resultText:
           'You take the retainer. The month-to-month math finally calms down.',
@@ -975,7 +976,7 @@ export const FOUNDATION_EVENTS: readonly GameEvent[] = [
       {
         id: 'counter_terms',
         label: 'Counter for a higher floor',
-        effects: { cash: 500, salary: 600, reputation: 4, riskTolerance: 3 },
+        effects: { cash: $$(500), salary: $$(600), reputation: 4, riskTolerance: 3 },
         setsFlags: ['has_retainer'],
         resultText:
           'You counter for a higher floor and shorter notice. They blink first.',
@@ -1010,7 +1011,7 @@ export const FOUNDATION_EVENTS: readonly GameEvent[] = [
       {
         id: 'accept_lead',
         label: 'Accept the lead-hand role',
-        effects: { salary: 450, reputation: 5, ambition: 4, stress: 5 },
+        effects: { salary: $$(450), reputation: 5, ambition: 4, stress: 5 },
         setsFlags: ['crew_lead'],
         resultText:
           'You take it. The crew tests you on day one.',
@@ -1018,14 +1019,14 @@ export const FOUNDATION_EVENTS: readonly GameEvent[] = [
       {
         id: 'decline_specialize',
         label: 'Decline — stay on the tools and get sharper',
-        effects: { skill: 6, salary: 250, discipline: 3 },
+        effects: { skill: 6, salary: $$(250), discipline: 3 },
         resultText:
           'You stay on the tools. The next raise comes from skill, not stripes.',
       },
       {
         id: 'shop_competing_offers',
         label: 'Take a competing offer at another shop',
-        effects: { cash: -100, salary: 550, network: 4, stress: 4 },
+        effects: { cash: $$(-100), salary: $$(550), network: 4, stress: 4 },
         resultText:
           'You take a competing offer. The new shop pays more and watches less.',
       },
@@ -1046,7 +1047,7 @@ export const FOUNDATION_EVENTS: readonly GameEvent[] = [
       {
         id: 'build_cushion',
         label: 'Ringfence three months of expenses',
-        effects: { cash: -800, assets: 800, stress: -8, discipline: 5 },
+        effects: { cash: $$(-800), assets: $$(800), stress: -8, discipline: 5 },
         setsFlags: ['has_emergency_fund'],
         resultText:
           'You ringfence three months of expenses. The background hum quiets.',
@@ -1054,7 +1055,7 @@ export const FOUNDATION_EVENTS: readonly GameEvent[] = [
       {
         id: 'push_into_index',
         label: 'Push it into the index instead',
-        effects: { cash: -800, investments: 1000, passiveIncome: 40, riskTolerance: 4 },
+        effects: { cash: $$(-800), investments: $$(1000), passiveIncome: $$(40), riskTolerance: 4 },
         setsFlags: ['has_brokerage'],
         resultText:
           'You push it into the index. Future-you might thank you. Or not.',
@@ -1062,7 +1063,7 @@ export const FOUNDATION_EVENTS: readonly GameEvent[] = [
       {
         id: 'upgrade_life',
         label: 'Upgrade the apartment a little',
-        effects: { cash: -800, expenses: 200, stress: -5, health: 4 },
+        effects: { cash: $$(-800), expenses: $$(200), stress: -5, health: 4 },
         setsFlags: ['inflated_lifestyle'],
         resultText:
           'You upgrade the apartment. It feels good in a way you don\'t fully trust.',
@@ -1089,7 +1090,7 @@ export const FOUNDATION_EVENTS: readonly GameEvent[] = [
       {
         id: 'finance_new',
         label: 'Finance a new one',
-        effects: { cash: -1500, debt: 3500, expenses: 250, stress: 5 },
+        effects: { cash: $$(-1500), debt: $$(3500), expenses: $$(250), stress: 5 },
         setsFlags: ['inflated_lifestyle'],
         resultText:
           'You sign the papers. The interior smells like a different life.',
@@ -1097,7 +1098,7 @@ export const FOUNDATION_EVENTS: readonly GameEvent[] = [
       {
         id: 'buy_used_cash',
         label: 'Pay cash for a used one',
-        effects: { cash: -2500, expenses: 80, stress: -2 },
+        effects: { cash: $$(-2500), expenses: $$(80), stress: -2 },
         resultText:
           'You pay cash for a used one. Less drama, more dignity.',
       },
@@ -1138,7 +1139,7 @@ export const FOUNDATION_EVENTS: readonly GameEvent[] = [
       {
         id: 'take_real_break',
         label: 'Take two real weeks off',
-        effects: { cash: -400, salary: -200, stress: -12, health: 7, ambition: -2 },
+        effects: { cash: $$(-400), salary: $$(-200), stress: -12, health: 7, ambition: -2 },
         setsFlags: ['burnout_warned'],
         resultText:
           'You take two weeks off and tell no one why. The colour comes back.',
@@ -1154,7 +1155,7 @@ export const FOUNDATION_EVENTS: readonly GameEvent[] = [
       {
         id: 'restructure_workload',
         label: 'Restructure — drop two commitments',
-        effects: { stress: -7, salary: -150, reputation: -2, discipline: 4 },
+        effects: { stress: -7, salary: $$(-150), reputation: -2, discipline: 4 },
         setsFlags: ['burnout_warned'],
         resultText:
           'You restructure. You drop two commitments and say it out loud.',
@@ -1183,7 +1184,7 @@ export const FOUNDATION_EVENTS: readonly GameEvent[] = [
       {
         id: 'drop_out_build',
         label: 'Drop out and build',
-        effects: { debt: -2000, ambition: 8, riskTolerance: 7, network: -5, stress: 4 },
+        effects: { debt: $$(-2000), ambition: 8, riskTolerance: 7, network: -5, stress: 4 },
         setsFlags: ['dropped_out'],
         resultText:
           'You file the paperwork. The relief is louder than the doubt.',
@@ -1199,7 +1200,7 @@ export const FOUNDATION_EVENTS: readonly GameEvent[] = [
       {
         id: 'push_through_finish',
         label: 'Push through and finish',
-        effects: { stress: 7, debt: 2000, discipline: 6, reputation: 4 },
+        effects: { stress: 7, debt: $$(2000), discipline: 6, reputation: 4 },
         setsFlags: ['finished_degree'],
         resultText:
           'You stay and finish on schedule. The credential is bought; the years are spent.',
@@ -1233,7 +1234,7 @@ export const FOUNDATION_EVENTS: readonly GameEvent[] = [
       {
         id: 'intro_recruiter',
         label: 'Take the recruiter intro',
-        effects: { network: 5, reputation: 4, salary: 200 },
+        effects: { network: 5, reputation: 4, salary: $$(200) },
         resultText:
           'Doors stay open you didn\'t know were doors.',
       },
@@ -1267,7 +1268,7 @@ export const FOUNDATION_EVENTS: readonly GameEvent[] = [
       {
         id: 'add_aggressively',
         label: 'Add lump-sum at the bottom',
-        effects: { cash: -1500, investments: 1800, passiveIncome: 60, riskTolerance: 5, stress: 4 },
+        effects: { cash: $$(-1500), investments: $$(1800), passiveIncome: $$(60), riskTolerance: 5, stress: 4 },
         resultText:
           'You add at the bottom of the move. You don\'t know it\'s the bottom yet.',
       },
@@ -1281,7 +1282,7 @@ export const FOUNDATION_EVENTS: readonly GameEvent[] = [
       {
         id: 'sell_to_safety',
         label: 'Sell into the dip',
-        effects: { cash: 700, investments: -1000, passiveIncome: -30, stress: -4, riskTolerance: -4 },
+        effects: { cash: $$(700), investments: $$(-1000), passiveIncome: $$(-30), stress: -4, riskTolerance: -4 },
         resultText:
           'You sell into the dip. The number stops hurting; future-you might.',
       },
@@ -1381,7 +1382,7 @@ export const FOUNDATION_EVENTS: readonly GameEvent[] = [
         // play stays pinned at 100 stress regardless of the choice.
         id: 'income_based_repayment',
         label: 'File for an aid package + income-based repayment',
-        effects: { expenses: -700, salary: 800, stress: -3, discipline: 3 },
+        effects: { expenses: $$(-700), salary: $$(800), stress: -3, discipline: 3 },
         setsFlags: ['took_uni_relief'],
         resultText:
           'You file the paperwork. A monthly stipend lands; the loan cheque shrinks. The runway widens by an order of magnitude.',
@@ -1389,7 +1390,7 @@ export const FOUNDATION_EVENTS: readonly GameEvent[] = [
       {
         id: 'loan_hardship_deferment',
         label: 'Use the hardship deferment',
-        effects: { expenses: -400, debt: 1500, stress: -1, discipline: 2 },
+        effects: { expenses: $$(-400), debt: $$(1500), stress: -1, discipline: 2 },
         setsFlags: ['took_uni_relief'],
         resultText:
           'You pause the payments. Interest keeps working in the dark while you reset.',
@@ -1401,8 +1402,8 @@ export const FOUNDATION_EVENTS: readonly GameEvent[] = [
         id: 'paid_coop',
         label: 'Swap a term for a paid co-op',
         effects: {
-          salary: 700,
-          cash: 500,
+          salary: $$(700),
+          cash: $$(500),
           skill: 4,
           network: 3,
           ambition: 3,
@@ -1441,7 +1442,7 @@ export const FOUNDATION_EVENTS: readonly GameEvent[] = [
         // play stays pinned at 100 stress regardless of the choice.
         id: 'income_based_repayment',
         label: 'File for an aid package + income-based repayment',
-        effects: { expenses: -700, salary: 800, stress: -3, discipline: 3 },
+        effects: { expenses: $$(-700), salary: $$(800), stress: -3, discipline: 3 },
         setsFlags: ['took_uni_relief'],
         resultText:
           'You file the paperwork. A monthly stipend lands; the loan cheque shrinks. The runway widens by an order of magnitude.',
@@ -1449,7 +1450,7 @@ export const FOUNDATION_EVENTS: readonly GameEvent[] = [
       {
         id: 'loan_hardship_deferment',
         label: 'Use the hardship deferment',
-        effects: { expenses: -400, debt: 1500, stress: -1, discipline: 2 },
+        effects: { expenses: $$(-400), debt: $$(1500), stress: -1, discipline: 2 },
         setsFlags: ['took_uni_relief'],
         resultText:
           'You pause the payments. Interest keeps working in the dark while you reset.',
@@ -1461,8 +1462,8 @@ export const FOUNDATION_EVENTS: readonly GameEvent[] = [
         id: 'paid_coop',
         label: 'Swap a term for a paid co-op',
         effects: {
-          salary: 700,
-          cash: 500,
+          salary: $$(700),
+          cash: $$(500),
           skill: 4,
           network: 3,
           ambition: 3,
@@ -1501,7 +1502,7 @@ export const FOUNDATION_EVENTS: readonly GameEvent[] = [
         // play stays pinned at 100 stress regardless of the choice.
         id: 'income_based_repayment',
         label: 'File for an aid package + income-based repayment',
-        effects: { expenses: -700, salary: 800, stress: -3, discipline: 3 },
+        effects: { expenses: $$(-700), salary: $$(800), stress: -3, discipline: 3 },
         setsFlags: ['took_uni_relief'],
         resultText:
           'You file the paperwork. A monthly stipend lands; the loan cheque shrinks. The runway widens by an order of magnitude.',
@@ -1509,7 +1510,7 @@ export const FOUNDATION_EVENTS: readonly GameEvent[] = [
       {
         id: 'loan_hardship_deferment',
         label: 'Use the hardship deferment',
-        effects: { expenses: -400, debt: 1500, stress: -1, discipline: 2 },
+        effects: { expenses: $$(-400), debt: $$(1500), stress: -1, discipline: 2 },
         setsFlags: ['took_uni_relief'],
         resultText:
           'You pause the payments. Interest keeps working in the dark while you reset.',
@@ -1521,8 +1522,8 @@ export const FOUNDATION_EVENTS: readonly GameEvent[] = [
         id: 'paid_coop',
         label: 'Swap a term for a paid co-op',
         effects: {
-          salary: 700,
-          cash: 500,
+          salary: $$(700),
+          cash: $$(500),
           skill: 4,
           network: 3,
           ambition: 3,

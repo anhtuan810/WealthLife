@@ -93,7 +93,15 @@ export function tick(p: Player): Player {
     momentum += 1;
   }
 
-  // 5. Net worth history (rounded for clean rendering).
+  // 5. Model-1 passive-income compounding. Applied AFTER this month's
+  //    cashflow lands so the player's current statement still reflects the
+  //    stream they actually earned this month — growth shows up in next
+  //    month's number, the same way debt-interest accrues for the next
+  //    month's balance. Multiplication preserves the zero floor naturally:
+  //    a never-built passiveIncome of 0 stays 0. Deterministic, no RNG.
+  const passiveIncome = p.passiveIncome * (1 + cfg.passiveGrowthPerMonth);
+
+  // 6. Net worth history (rounded for clean rendering).
   const netWorth = Math.round(cash + p.assets + p.investments - debt);
   const netWorthHistory = [...p.netWorthHistory, netWorth];
 
@@ -103,6 +111,7 @@ export function tick(p: Player): Player {
     age,
     cash,
     debt,
+    passiveIncome,
     stress,
     stressMomentum: momentum,
     netWorthHistory,
