@@ -2,6 +2,13 @@ import {
   FOUNDATION_PATH_BY_ID,
   type FoundationPathId,
 } from '../data/foundationPaths';
+import {
+  START_POINT_BY_ID,
+  type StartPointDirection,
+  type StartPointId,
+} from '../data/startPoints';
+import { RUN_TARGET_AGE_DEFAULT } from '../data/constants';
+import { ALL_EVENTS } from '../content';
 
 // Per MASTER §27. v3: no locked archetype/careerDirection. Identity is the
 // shape of strengths + flags, narrated at run-end.
@@ -19,6 +26,12 @@ export type Player = {
   month: number;
   phase: Phase;
   foundationPath: FoundationPathId;
+
+  // Player-chosen freedom-goal age, set at run start (range 40–60). The
+  // run-end trigger compares against this rather than the global default,
+  // so different runs can target different ages. Survives save/load via
+  // the Player shape itself.
+  targetAge: number;
 
   // Finances
   cash: number;
@@ -65,9 +78,17 @@ export type Player = {
   // Undefined for a fresh player (before any month has been advanced) so the
   // arrow is suppressed on month 0.
   lastProjectedFlow?: number;
+
+  // Which start-point machine spawned this player. Additive on save/load —
+  // legacy saves without this field can safely default-treat as 'university'.
+  // Drives summary labels (start-age → endAge) and any future start-aware UI.
+  startPointId?: StartPointId;
 };
 
-export function createPlayer(pathId: FoundationPathId): Player {
+export function createPlayer(
+  pathId: FoundationPathId,
+  targetAge: number = RUN_TARGET_AGE_DEFAULT,
+): Player {
   const b = FOUNDATION_PATH_BY_ID[pathId].baseline;
   const startingNetWorth = Math.round(
     b.cash + b.assets + b.investments - b.debt,
@@ -77,6 +98,7 @@ export function createPlayer(pathId: FoundationPathId): Player {
     month: 0,
     phase: 'foundation',
     foundationPath: pathId,
+    targetAge,
 
     cash: b.cash,
     salary: b.salary,
@@ -104,6 +126,113 @@ export function createPlayer(pathId: FoundationPathId): Player {
     netWorthHistory: [startingNetWorth],
 
     pendingDecisions: [],
+
+    startPointId: 'university',
+  };
+}
+
+// LifeDirection → legacy leaning_* flag. Foundation's whats_next event
+// already writes these flags during a normal foundation run; this table
+// mirrors that mapping so non-foundation starts (which skip whats_next) can
+// stamp the same flag at spawn time. Direction-gated content downstream
+// gates on the flag, not on player.direction, so this keeps the existing
+// requiresFlags scheme intact.
+export const LEANING_FLAG_FOR_DIRECTION: Record<StartPointDirection, string> = {
+  corporate: 'leaning_corporate',
+  founder: 'leaning_founder',
+  freelancer: 'leaning_independent',
+};
+
+// Spawn a player from a start point. `university` falls straight through to
+// createPlayer so the byte-for-byte default new-run shape is preserved — the
+// existing foundation-path picker stays the path of truth for those runs.
+// The later starts (early/established/midlife) apply the start-point seed
+// directly, commit the supplied direction, and PRE-MARK the choose_direction
+// event as fired so the in-game direction beat never refires for a player who
+// already committed at run setup. They also push the started_* flag so future
+// content can branch on which entry machine was used.
+export function createPlayerFromStartPoint(
+  startPointId: StartPointId,
+  direction?: StartPointDirection,
+): Player {
+  const sp = START_POINT_BY_ID[startPointId];
+
+  if (sp.id === 'university') {
+    // The university picker re-uses today's exact default new-run path; we
+    // just stamp the start-point id on top so summary labels can read it
+    // consistently with the later starts.
+    return { ...createPlayer('university'), startPointId: 'university' };
+  }
+
+  if (!sp.seed) {
+    throw new Error(`start point ${startPointId} missing seed`);
+  }
+  if (sp.requiresDirection && !direction) {
+    throw new Error(`start point ${startPointId} requires a direction`);
+  }
+
+  const seed = sp.seed;
+  const startingNetWorth = Math.round(
+    seed.cash + seed.assets - seed.liabilities,
+  );
+
+  return {
+    age: sp.startAge,
+    month: 0,
+    phase: sp.startPhase,
+    // foundationPath is incidental for non-foundation starts (foundation
+    // events are phase-gated and never fire from a career/growth phase). We
+    // park it on 'university' as a stable placeholder so the schema stays
+    // satisfied; nothing reads it for these starts.
+    foundationPath: 'university',
+    targetAge: RUN_TARGET_AGE_DEFAULT,
+
+    cash: seed.cash,
+    salary: seed.salary,
+    expenses: seed.expenses,
+    debt: seed.liabilities,
+    investments: 0,
+    assets: seed.assets,
+    passiveIncome: seed.passiveIncome,
+
+    skill: seed.strengths.skill,
+    network: seed.strengths.network,
+    reputation: seed.strengths.reputation,
+    discipline: seed.strengths.discipline,
+    riskTolerance: seed.strengths.riskTolerance,
+    ambition: seed.strengths.ambition,
+
+    stress: 15,   // TODO_TUNE — baseline pressure for any seeded start
+    health: 80,   // TODO_TUNE
+
+    // Direction-conditioned career/growth/freedom content gates on the
+    // existing `leaning_*` flag (set during foundation by whats_next).
+    // Non-foundation starts skip that beat, so we stamp the matching
+    // leaning_* flag here too — keeps the existing requiresFlags scheme
+    // working for direction-gated late-life events without engine changes.
+    flags: [
+      ...sp.setsFlags,
+      ...(direction ? [LEANING_FLAG_FOR_DIRECTION[direction]] : []),
+    ],
+    // Pre-resolve the direction beat AND every foundation-phase event so
+    // none of them can re-enter the eligible pool for a player who skipped
+    // foundation. A few foundation events (e.g. the university income-relief
+    // beats) intentionally bleed past age 22 via `maxAge: 24` but rely on
+    // `phase: 'foundation'` metadata to opt out for non-foundation starts —
+    // since they don't all carry a conditions.phase gate, the firedEventIds
+    // filter is the right "existing gating" hook to enforce that here.
+    firedEventIds: [
+      'choose_direction',
+      ...ALL_EVENTS.filter((e) => e.phase === 'foundation').map((e) => e.id),
+    ],
+    direction: direction ?? null,
+
+    stressMomentum: 0,
+    netWorthHistory: [startingNetWorth],
+
+    pendingDecisions: [],
+
+    startPointId: sp.id,
   };
 }
 

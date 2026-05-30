@@ -20,7 +20,12 @@ import { LifeFigurePreview } from './LifeFigurePreview';
 // each full-screen art surface, the run summary, and nudge gameStore by hand
 // without playing through a real run.
 
-const SCENE_KEYS = ['start_hero', 'phase_career'] as const;
+const SCENE_KEYS = [
+  'start_hero',
+  'phase_career',
+  'phase_growth',
+  'phase_freedom',
+] as const;
 
 type SceneKey = (typeof SCENE_KEYS)[number];
 
@@ -45,8 +50,16 @@ export function DevMenu() {
   const devSetPhase = useGameStore((s) => s.devSetPhase);
   const devSetAge = useGameStore((s) => s.devSetAge);
   const devSeedRunSummary = useGameStore((s) => s.devSeedRunSummary);
+  const devTriggerPhaseTransition = useGameStore(
+    (s) => s.devTriggerPhaseTransition,
+  );
   const endingResult = useGameStore((s) => s.endingResult);
   const grade = useGameStore((s) => s.grade);
+
+  const triggerTransition = (phase: Phase) => {
+    devTriggerPhaseTransition(phase);
+    setMenuOpen(false);
+  };
 
   const openScene = (key: SceneKey) => {
     setMenuOpen(false);
@@ -143,6 +156,19 @@ export function DevMenu() {
                       disabled={!player}
                       active={player?.age === a}
                       onPress={() => devSetAge(a)}
+                    />
+                  ))}
+                </Grid>
+              </Section>
+
+              <Section label="TRIGGER PHASE TRANSITION">
+                <Grid>
+                  {(['career', 'growth', 'freedom'] as const).map((phase) => (
+                    <Chip
+                      key={phase}
+                      label={phase}
+                      disabled={!player}
+                      onPress={() => triggerTransition(phase)}
                     />
                   ))}
                 </Grid>

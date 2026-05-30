@@ -18,7 +18,7 @@ import { NetWorthChart } from '../components/NetWorthChart';
 import { PrimaryButton } from '../components/PrimaryButton';
 import { IdentityMedallion } from '../components/visual/IdentityMedallion';
 import { colors, radii, spacing, typography } from '../theme';
-import { FOUNDATION_PATH_BY_ID } from '../data/foundationPaths';
+import { START_POINT_BY_ID } from '../data/startPoints';
 import {
   STRENGTH_FIELDS,
   freedomPct,
@@ -73,16 +73,17 @@ export function RunSummaryScreen({ onPlayAgain }: Props) {
 
   if (!player || !endingResult || !grade) return null;
 
-  const path = FOUNDATION_PATH_BY_ID[player.foundationPath];
   const freedom = freedomPct(player);
   const nw = netWorth(player);
 
   // Net-worth chart annotations — frame the curve so it narrates the run.
-  // Players always start at age 18 (createPlayer); end is the player's final
-  // age. netWorthHistory is seeded with the starting net worth in
-  // createPlayer, so [0] always exists for a real run; the ?? 0 is defensive.
-  const startAge = 18;
-  const endAge = player.age;
+  // startAge now reads from the player's actual entry into the arc (set by
+  // createPlayerFromStartPoint) rather than the previously-hardcoded 18.
+  // Legacy/dev saves without startPointId fall back to 'university', which
+  // resolves to startAge 18 — the prior behavior is preserved by default.
+  const startPoint = START_POINT_BY_ID[player.startPointId ?? 'university'];
+  const startAge = startPoint.startAge;
+  const endAge = player.targetAge;
   const startNetWorth = player.netWorthHistory[0] ?? 0;
   const endNetWorth =
     player.netWorthHistory[player.netWorthHistory.length - 1] ?? 0;
@@ -101,7 +102,7 @@ export function RunSummaryScreen({ onPlayAgain }: Props) {
       >
         <Animated.View style={[styles.header, headerStyle]}>
           <Text style={styles.eyebrow}>
-            {path.title.toUpperCase()} · AGE {player.age}
+            AGE {startAge} → {endAge}
           </Text>
           <Text style={styles.endingTitle}>{endingResult.title}</Text>
           <Text style={styles.endingCopy}>{endingResult.copy}</Text>

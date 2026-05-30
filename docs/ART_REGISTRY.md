@@ -91,7 +91,7 @@ Preserved for reference only. Do not use for new generations.
 |---|---|---|---|
 | `start_hero` | Portrait full-bleed | ✅ riso | The set's style anchor. Re-upload on every other generation. |
 | `event_*` (×58) | Landscape 3:2 (1536×1024) | ✅ riso | 26 original + 32 gap-fill = 58, all in riso. Subject upper-center. |
-| `identity_medallion` | Square, transparent center | ✅ riso/gold | Frame around procedural StrengthSigil on RunSummaryScreen. PNG transparency was the blocker (GPT Image bg unreliable) — solved via luminance-keyed background removal. |
+| `identity_medallion` | — | 🗑 RETIRED | RunSummaryScreen medallion is now procedural — a thin gold ring + warm halo composed in Skia around the StrengthSigil radar grid. PNG no longer used; asset deleted, registry entry removed. Historical note: PNG transparency was the blocker (GPT Image bg unreliable) — solved via luminance-keyed background removal before the procedural switch made the asset unnecessary. |
 | `phase_career` | Portrait full-bleed | ✅ riso | Single MVP phase-transition scene. Fires once at foundation→career flip (age ~22). |
 | `phase_survival` / `phase_stability` / `phase_growth` / `phase_freedom` | Portrait full-bleed | ⏸ V1.1 | See §5 deferral rationale. |
 | `cat_*` accents | n/a | ✕ CUT | Redundant with ArtSlot's procedural category glyphs. Decision: do not produce. |
@@ -101,12 +101,42 @@ Preserved for reference only. Do not use for new generations.
 
 ## 3. Event coverage
 
-Total events in `src/content/events/`: **58**
-Events with riso art: **58 (100%)**
-Last audit: 2026-05-27
+Total events in `src/content/events/`: **58 + 14 late-life (Phase 2 brief)**
+Events with riso art: **58 (100%) — late-life slots ⬜ placeholder only**
+Last audit: 2026-05-27 (foundation/career) · 2026-05-30 (late-life slots logged)
 
 The original 26 (registered at MVP start) and the 32 gap-fill events
 (added 2026-05-27 after audit) are all in the v2 riso direction.
+
+### Phase 2 late-life slots (status: ⬜ placeholder only)
+
+Per the Phase 2 content brief, growth/freedom events ship with art keys
+that auto-fall-back to ArtSlot's procedural placeholder until PNGs land.
+The placeholder is the contract; bundling does not require the PNG.
+Founder generation subjects below (one-line briefs from §2/§3 of the
+content brief).
+
+Growth phase (35–50):
+- `growth_index_habit` ⬜ — a single seed sprouting into a thin gold line-chart. Tint: emerald.
+- `growth_lifestyle_creep` ⬜ — a golden doorway opening to a larger room. Tint: gold.
+- `growth_market_correction` ⬜ — a gold candlestick line dipping then steadying. Tint: blue.
+- `growth_real_estate` ⬜ — a small house with a thin gold income-stream arc rising from it. Tint: emerald.
+- `growth_career_plateau` ⬜ — a staircase whose top steps fade into haze. Tint: gold.
+- `growth_health_reckoning` ⬜ — a single sunlit running path through trees. Tint: blue.
+- `growth_corp_golden_handcuffs` ⬜ — a gilded watch/cuff with a gold key beside it. Tint: gold.
+- `growth_founder_exit_window` ⬜ — an open gold door at the end of a runway. Tint: emerald.
+- `growth_freelancer_productize` ⬜ — a single tool casting a long gold shadow shaped like a coin stack. Tint: emerald.
+
+Freedom phase (50–60):
+- `freedom_work_optional` ⬜ — a chair turned toward an open golden window. Tint: gold.
+- `freedom_drawdown_question` ⬜ — a gold vessel pouring a thin steady stream. Tint: emerald.
+- `freedom_sequence_risk` ⬜ — a gold tightrope near a lit platform. Tint: blue.
+- `freedom_late_bloomers_sprint` ⬜ — a single figure-less track curving uphill into gold light. Tint: gold.
+- `freedom_optionality` ⬜ — an open gold hand releasing light. Tint: emerald.
+
+Phase-transition scenes still needed:
+- `phase_growth` ⬜ — same hero-art treatment as `phase_career`; opens "THE GROWTH YEARS" beat.
+- `phase_freedom` ⬜ — same treatment; opens "WITHIN REACH" beat.
 
 Three near-duplicate events share theme but render as separate images
 for now:

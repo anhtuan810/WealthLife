@@ -2,12 +2,21 @@ import { create } from 'zustand';
 import type { FoundationPathId } from '../data/foundationPaths';
 import {
   DIRECTIONAL_FLAGS,
-  END_AGE,
   FOUNDATION_END_AGE,
   FOUNDATION_SAFETY_AGE,
   PENDING_DECISIONS_CAP,
+  PHASE_START_AGES,
 } from '../data/constants';
-import { createPlayer, type Phase, type Player } from '../game/player';
+import type {
+  StartPointDirection,
+  StartPointId,
+} from '../data/startPoints';
+import {
+  createPlayer,
+  createPlayerFromStartPoint,
+  type Phase,
+  type Player,
+} from '../game/player';
 import { tick } from '../game/tick';
 import { ALL_EVENTS } from '../content';
 import type { Ending, GameEvent } from '../types/events';
@@ -21,11 +30,27 @@ import {
 import { effectiveDeferWindow } from '../types/events';
 import { computeGrade, type GradeResult } from '../systems/grade';
 
+// Compression loop bounds.
+//   SKIP_SAFETY_CAP: maximum months a single fast-forward can advance.
+//                    The compressed loop will normally exit far sooner on an
+//                    event, phase boundary, or run-end; this is purely the
+//                    "no infinite loop on a bug" net.
+//   NUDGE_WINDOW:    months from expiry at which a parked decision is
+//                    considered urgent. Mirrors the dashboard's urgent pill
+//                    (`expiryMonth - month <= 1`) — fast-forward halts the
+//                    moment any surviving parked decision lands in this
+//                    window, so the user always gets a chance to resolve it
+//                    before it lapses.
 const SKIP_SAFETY_CAP = 24;
+const NUDGE_WINDOW = 1;
 
-// Flag set the first (and only) time the foundation→career overlay fires.
-// Lives on Player.flags so it survives the same way directional flags do.
+// Flags set the first (and only) time each phase-transition overlay fires.
+// Live on Player.flags so they survive the same way directional flags do.
+// The growth/freedom variants gate the new transition scenes added in the
+// structural-life-arc pass.
 export const SEEN_CAREER_TRANSITION_FLAG = 'seen_career_transition';
+export const SEEN_GROWTH_TRANSITION_FLAG = 'seen_growth_transition';
+export const SEEN_FREEDOM_TRANSITION_FLAG = 'seen_freedom_transition';
 
 // Resolved record of a parked decision that expired this step. The store
 // stashes these on `lapsedThisStep` so a future acknowledgment surface can
@@ -137,6 +162,40 @@ function maybeTransitionToCareer(p: Player): Player {
   return p;
 }
 
+// Phase ordering used by maybeAdvancePhase. Foundation is omitted on purpose:
+// maybeTransitionToCareer keeps sole ownership of foundation→career (it's the
+// only flip that's flag-gated rather than pure-age), and this function refuses
+// to touch a player still in foundation.
+const LATER_PHASE_ORDER: ReadonlyArray<Exclude<Phase, 'foundation'>> = [
+  'career',
+  'growth',
+  'freedom',
+];
+
+// Pure-age phase progression for the later life-arc flips (career→growth at
+// 35, growth→freedom at 50). Resolves by AGE, not by month delta, so a
+// multi-month jump still lands on the right phase. Never moves backward.
+// Foundation is the exclusive domain of maybeTransitionToCareer.
+function maybeAdvancePhase(p: Player): Player {
+  if (p.phase === 'foundation') return p;
+
+  // Highest table entry among {career, growth, freedom} with startAge <= age.
+  let target: Exclude<Phase, 'foundation'> = 'career';
+  for (const phase of LATER_PHASE_ORDER) {
+    if (p.age >= PHASE_START_AGES[phase]) target = phase;
+  }
+
+  // Never move backward — if dev tools or some future code put the player on
+  // a higher phase than the table would say, leave them there.
+  const currentIdx = LATER_PHASE_ORDER.indexOf(
+    p.phase as Exclude<Phase, 'foundation'>,
+  );
+  const targetIdx = LATER_PHASE_ORDER.indexOf(target);
+  if (targetIdx <= currentIdx) return p;
+
+  return { ...p, phase: target };
+}
+
 // Pure single-month step. The store wraps it so skipToNextDecision can loop
 // without going through React state per iteration. Order:
 //   1) tick economy (month++, possibly age++)
@@ -152,7 +211,9 @@ function advanceMonthStep(
   const { player: ticked, lapsed: lapsedThisStep } = expirePendingDecisions(
     tick(player),
   );
-  const phased = maybeTransitionToCareer(ticked);
+  // Foundation→career first (flag-gated, fire-once UI overlay). Then the
+  // later age-based flips (career→growth at 35, growth→freedom at 50).
+  const phased = maybeAdvancePhase(maybeTransitionToCareer(ticked));
   const nextMonths = monthsSinceLastEvent + 1;
 
   // Foundation → career, fire-once. Stamp the flag at detection so a force-
@@ -178,7 +239,53 @@ function advanceMonthStep(
     };
   }
 
-  if (phased.age >= END_AGE) {
+  // Career → growth and growth → freedom: same fire-once pattern as the
+  // foundation→career transition, just keyed off the later age boundaries.
+  // For start points that begin past these flips (e.g. midlife starts in
+  // growth) ticked.phase already matches the destination, so the entry
+  // guards never trigger and the overlay never fires for transitions the
+  // player has already lived through.
+  if (
+    ticked.phase === 'career' &&
+    phased.phase === 'growth' &&
+    !phased.flags.includes(SEEN_GROWTH_TRANSITION_FLAG)
+  ) {
+    return {
+      player: {
+        ...phased,
+        flags: addUniqueFlag(phased.flags, SEEN_GROWTH_TRANSITION_FLAG),
+      },
+      monthsSinceLastEvent: nextMonths,
+      currentEvent: null,
+      gameOver: false,
+      endingResult: null,
+      grade: null,
+      phaseTransition: 'growth',
+      lapsedThisStep,
+    };
+  }
+
+  if (
+    ticked.phase === 'growth' &&
+    phased.phase === 'freedom' &&
+    !phased.flags.includes(SEEN_FREEDOM_TRANSITION_FLAG)
+  ) {
+    return {
+      player: {
+        ...phased,
+        flags: addUniqueFlag(phased.flags, SEEN_FREEDOM_TRANSITION_FLAG),
+      },
+      monthsSinceLastEvent: nextMonths,
+      currentEvent: null,
+      gameOver: false,
+      endingResult: null,
+      grade: null,
+      phaseTransition: 'freedom',
+      lapsedThisStep,
+    };
+  }
+
+  if (phased.age >= phased.targetAge) {
     return {
       player: phased,
       monthsSinceLastEvent: nextMonths,
@@ -215,7 +322,13 @@ function advanceMonthStep(
 }
 
 type GameState = {
+  // Start-point selection — the new entry into a run. University defers
+  // foundation-path selection to selectedPath; the three later starts defer
+  // direction selection to selectedDirection. startGame consumes whatever
+  // matching pair is present and routes through createPlayerFromStartPoint.
+  selectedStartPoint: StartPointId | null;
   selectedPath: FoundationPathId | null;
+  selectedDirection: StartPointDirection | null;
   player: Player | null;
   freedomPulse: number;
 
@@ -243,7 +356,9 @@ type GameState = {
   // acknowledgment surface will consume + clear this. Nothing renders yet.
   lapsedThisStep: LapsedEntry[];
 
+  selectStartPoint: (id: StartPointId) => void;
   selectFoundationPath: (id: FoundationPathId) => void;
+  selectDirection: (direction: StartPointDirection) => void;
   startGame: () => void;
   resetSelection: () => void;
 
@@ -261,6 +376,9 @@ type GameState = {
   devSetPhase: (phase: Phase) => void;
   devSetAge: (age: number) => void;
   devSeedRunSummary: () => void;
+  // Fires the transition overlay for the supplied phase without advancing
+  // time. Used to preview phase_* scenes end-to-end in the dev menu.
+  devTriggerPhaseTransition: (phase: Phase) => void;
 };
 
 const INITIAL_RUN_STATE = {
@@ -277,25 +395,49 @@ const INITIAL_RUN_STATE = {
 } as const;
 
 export const useGameStore = create<GameState>((set, get) => ({
+  selectedStartPoint: null,
   selectedPath: null,
+  selectedDirection: null,
   ...INITIAL_RUN_STATE,
 
+  selectStartPoint: (id) => set({ selectedStartPoint: id }),
   selectFoundationPath: (id) => set({ selectedPath: id }),
+  selectDirection: (direction) => set({ selectedDirection: direction }),
 
+  // Spawn a player from the selected start-point + matching sub-pick.
+  // university requires a foundation-path pick; the three later starts
+  // require a direction. Either is a no-op if the prerequisite picker
+  // hasn't been touched.
   startGame: () => {
-    const id = get().selectedPath;
-    if (!id) return;
+    const startPointId = get().selectedStartPoint;
+    if (!startPointId) return;
+    if (startPointId === 'university') {
+      const pathId = get().selectedPath;
+      if (!pathId) return;
+      // The university entry is byte-identical to the legacy default new run
+      // — createPlayerFromStartPoint('university') routes to createPlayer
+      // under the hood, and we pass the picked foundation path through.
+      set({
+        ...INITIAL_RUN_STATE,
+        player: { ...createPlayer(pathId), startPointId: 'university' },
+      });
+      return;
+    }
+    const direction = get().selectedDirection;
+    if (!direction) return;
     set({
       ...INITIAL_RUN_STATE,
-      player: createPlayer(id),
+      player: createPlayerFromStartPoint(startPointId, direction),
     });
   },
 
-  // Full reset — clears the path selection AND all run state. Used by both
-  // the cold-boot reset and "Play Again" from the run summary.
+  // Full reset — clears every pick AND all run state. Used by the cold-boot
+  // reset and "Play Again" from the run summary.
   resetSelection: () =>
     set({
+      selectedStartPoint: null,
       selectedPath: null,
+      selectedDirection: null,
       ...INITIAL_RUN_STATE,
     }),
 
@@ -475,6 +617,15 @@ export const useGameStore = create<GameState>((set, get) => ({
           event = step.currentEvent;
           break;
         }
+        // Halt the fast-forward when any surviving parked decision is within
+        // its nudge window, so the user can act on it before it lapses. The
+        // dashboard's urgent pill uses the same predicate — keeping these in
+        // lockstep means the moment Skip surfaces the dashboard, the urgent
+        // signal is already visible.
+        const urgent = player.pendingDecisions.some(
+          (d) => d.expiryMonth - player.month <= NUDGE_WINDOW,
+        );
+        if (urgent) break;
       }
 
       return {
@@ -525,6 +676,29 @@ export const useGameStore = create<GameState>((set, get) => ({
       return { player: { ...s.player, age: a } };
     }),
 
+  // Drop the player straight into the phase-transition overlay for the
+  // supplied phase. The fire-once flag is intentionally cleared first so a
+  // dev can preview the same transition repeatedly without resetting the run.
+  devTriggerPhaseTransition: (phase) =>
+    set((s) => {
+      if (!s.player) return s;
+      const flag =
+        phase === 'career'
+          ? SEEN_CAREER_TRANSITION_FLAG
+          : phase === 'growth'
+            ? SEEN_GROWTH_TRANSITION_FLAG
+            : phase === 'freedom'
+              ? SEEN_FREEDOM_TRANSITION_FLAG
+              : null;
+      const flags = flag
+        ? s.player.flags.filter((f) => f !== flag)
+        : s.player.flags;
+      return {
+        player: { ...s.player, flags },
+        phaseTransition: phase,
+      };
+    }),
+
   // Seed a fully-formed run-end state so RunSummaryScreen can render even
   // when no real run has been played. Uses the current player if present;
   // otherwise spins up a default university player.
@@ -533,7 +707,9 @@ export const useGameStore = create<GameState>((set, get) => ({
       const base = s.player ?? createPlayer('university');
       const seeded: Player = {
         ...base,
-        age: END_AGE,
+        // Land the dev preview on the player's chosen target so the summary
+        // labels (AGE 18 → targetAge) read coherently.
+        age: base.targetAge,
         // give the summary something to look at if the player is fresh
         passiveIncome: base.passiveIncome > 0 ? base.passiveIncome : 1_400,
         expenses: base.expenses > 0 ? base.expenses : 2_400,

@@ -15,12 +15,19 @@ import {
   END_AGE,
   FOUNDATION_END_AGE,
   FOUNDATION_SAFETY_AGE,
+  PHASE_START_AGES,
 } from '../data/constants';
 import {
   FOUNDATION_PATHS,
   type FoundationPathId,
 } from '../data/foundationPaths';
-import { createPlayer, freedomPct, netWorth, type Player } from '../game/player';
+import {
+  createPlayer,
+  freedomPct,
+  netWorth,
+  type Phase,
+  type Player,
+} from '../game/player';
 import { tick } from '../game/tick';
 import { ALL_EVENTS } from '../content';
 import {
@@ -112,6 +119,10 @@ export type RunRow = {
   monthsPlayed: number;
 
   freedomPct: number;
+  // Raw, UNCLAMPED terminal freedom coverage = passiveIncome / expenses,
+  // rounded to 3 decimals. Lets us see how runs stack up against the
+  // shipped 0.65 bar without losing the high tail to a clamp.
+  freedomCoverage: number;
   gradeLetter: GradeLetter;
   gradeScore: number;
   components: { freedom: number; sustainability: number; growth: number };
@@ -194,6 +205,29 @@ function maybeTransitionToCareer(p: Player): Player {
   return p;
 }
 
+// Mirrors gameStore.maybeAdvancePhase. Age-based progression for the later
+// flips (career→growth at 35, growth→freedom at 50). Foundation→career is
+// owned by maybeTransitionToCareer above.
+const LATER_PHASE_ORDER: ReadonlyArray<Exclude<Phase, 'foundation'>> = [
+  'career',
+  'growth',
+  'freedom',
+];
+
+function maybeAdvancePhase(p: Player): Player {
+  if (p.phase === 'foundation') return p;
+  let target: Exclude<Phase, 'foundation'> = 'career';
+  for (const phase of LATER_PHASE_ORDER) {
+    if (p.age >= PHASE_START_AGES[phase]) target = phase;
+  }
+  const currentIdx = LATER_PHASE_ORDER.indexOf(
+    p.phase as Exclude<Phase, 'foundation'>,
+  );
+  const targetIdx = LATER_PHASE_ORDER.indexOf(target);
+  if (targetIdx <= currentIdx) return p;
+  return { ...p, phase: target };
+}
+
 // --- single run -----------------------------------------------------------
 
 function detectLeaning(p: Player): Leaning {
@@ -204,15 +238,16 @@ function detectLeaning(p: Player): Leaning {
   return 'none';
 }
 
-function driveRun(
+export function driveRun(
   pathId: FoundationPathId,
   seed: number,
   policy: Policy,
   excludeEventIds?: ReadonlySet<string>,
+  targetAge?: number,
 ): RunRow {
   const rng = mulberry32(seed);
   return withMathRandom(rng, () => {
-    let player = createPlayer(pathId);
+    let player = createPlayer(pathId, targetAge);
     let monthsSinceLastEvent = 0;
     let peakStress = player.stress;
     let sawCorp = false;
@@ -227,11 +262,11 @@ function driveRun(
 
     for (let step = 0; step < monthCap; step++) {
       player = tick(player);
-      player = maybeTransitionToCareer(player);
+      player = maybeAdvancePhase(maybeTransitionToCareer(player));
       monthsSinceLastEvent += 1;
       if (player.stress > peakStress) peakStress = player.stress;
 
-      if (player.age >= END_AGE) {
+      if (player.age >= player.targetAge) {
         endingResult = evaluateEndings(player);
         break;
       }
@@ -291,6 +326,10 @@ function driveRun(
       monthsPlayed: player.month,
 
       freedomPct: freedomPct(player),
+      freedomCoverage:
+        player.expenses > 0
+          ? Math.round((player.passiveIncome / player.expenses) * 1000) / 1000
+          : 0,
       gradeLetter: grade.letter,
       gradeScore: grade.score,
       components: grade.components,
@@ -343,6 +382,7 @@ function snapshotToPlayer(snap: EndStateSnapshot): Player {
   return {
     ...snap,
     age: END_AGE,
+    targetAge: END_AGE,
     month: 0,
     phase: 'career',
     foundationPath: FOUNDATION_PATHS[0].id,
@@ -806,6 +846,9 @@ export type RunReportOptions = {
   // content-effect comparisons. Same seeds + same policies → the only
   // difference between two runs is the event set.
   excludeEventIds?: ReadonlySet<string>;
+  // Per-run target age (40–60). Omit to let createPlayer default to
+  // RUN_TARGET_AGE_DEFAULT.
+  targetAge?: number;
 };
 
 // Event IDs added in the prompt 7.3 content pass. Pass this set as
@@ -836,7 +879,9 @@ export function runReport(opts: RunReportOptions = {}): Report {
       // Round-robin policy assignment — same (seed,policy) pairing across
       // paths, so paths are compared on the same play styles too.
       const policy = POLICIES[i % POLICIES.length];
-      pathRows.push(driveRun(path.id, seed, policy, opts.excludeEventIds));
+      pathRows.push(
+        driveRun(path.id, seed, policy, opts.excludeEventIds, opts.targetAge),
+      );
     }
     rows.push(...pathRows);
     perPath[path.id] = summarize(path.id, pathRows);

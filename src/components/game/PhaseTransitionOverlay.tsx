@@ -22,6 +22,17 @@ const PHASE_COPY: Partial<Record<Phase, { eyebrow: string; title: string }>> = {
     eyebrow: 'A NEW CHAPTER',
     title: 'Career begins.',
   },
+  // Phase-2 brief §5 — refined cinematic lines that frame each act.
+  growth: {
+    eyebrow: 'THE GROWTH YEARS',
+    title:
+      'Your income has\nroom now. What\nyou do with the\nsurplus is the\nwhole game.',
+  },
+  freedom: {
+    eyebrow: 'WITHIN REACH',
+    title:
+      'The finish line\nis close enough\nto see. The\nquestion stops\nbeing how much,\nand starts being\nwhether it’s enough.',
+  },
 };
 
 // Full-bleed acknowledgement beat: shown the first time a phase boundary is

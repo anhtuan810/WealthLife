@@ -13,6 +13,8 @@ import { AmbientGlow } from '../components/AmbientGlow';
 import { HeroBackdrop } from '../components/visual/HeroBackdrop';
 import { PrimaryButton } from '../components/PrimaryButton';
 import { FoundationPathCard } from '../components/FoundationPathCard';
+import { StartPointCard } from '../components/StartPointCard';
+import { DirectionCard } from '../components/DirectionCard';
 import { EventCard } from '../components/game/EventCard';
 import { LapsedOverlay } from '../components/game/LapsedOverlay';
 import { PhaseTransitionOverlay } from '../components/game/PhaseTransitionOverlay';
@@ -20,18 +22,58 @@ import { DashboardLayer } from './DashboardLayer';
 import { RunSummaryScreen } from './RunSummaryScreen';
 import { DevMenu } from '../dev/DevMenu';
 import { FOUNDATION_PATHS } from '../data/foundationPaths';
+import {
+  START_POINTS,
+  START_POINT_BY_ID,
+  type StartPointDirection,
+} from '../data/startPoints';
 import { leaningFromFlags } from '../game/player';
 import { useGameStore } from '../state/gameStore';
 import { colors, spacing, typography } from '../theme';
 
-type Stage = 'title' | 'paths' | 'dashboard';
-const STAGE_INDEX: Record<Stage, number> = { title: 0, paths: 1, dashboard: 2 };
+type Stage = 'title' | 'startPoint' | 'paths' | 'direction' | 'dashboard';
+const STAGE_INDEX: Record<Stage, number> = {
+  title: 0,
+  startPoint: 1,
+  paths: 2,
+  direction: 2, // peer of paths — only one renders per run
+  dashboard: 3,
+};
+
+// Direction copy used by the sub-pick that follows any non-university start.
+// One-liners frame the long-arc shape of each direction so the choice carries
+// weight without leaning on stat numbers.
+const DIRECTION_OPTIONS: ReadonlyArray<{
+  id: StartPointDirection;
+  title: string;
+  blurb: string;
+}> = [
+  {
+    id: 'corporate',
+    title: 'Corporate Climber',
+    blurb: 'Commit to the ladder. Title, package, brand — the path is well-lit.',
+  },
+  {
+    id: 'founder',
+    title: 'Startup Founder',
+    blurb: "Commit to building. The path is dim; the ceiling isn't drawn.",
+  },
+  {
+    id: 'freelancer',
+    title: 'Freelancer',
+    blurb: 'Commit to independence. You trade ceiling for control.',
+  },
+];
 
 export function HomeScreen() {
   const [stage, setStage] = useState<Stage>('title');
+  const selectedStartPoint = useGameStore((s) => s.selectedStartPoint);
   const selectedPath = useGameStore((s) => s.selectedPath);
+  const selectedDirection = useGameStore((s) => s.selectedDirection);
   const player = useGameStore((s) => s.player);
+  const selectStartPoint = useGameStore((s) => s.selectStartPoint);
   const selectFoundationPath = useGameStore((s) => s.selectFoundationPath);
+  const selectDirection = useGameStore((s) => s.selectDirection);
   const startGame = useGameStore((s) => s.startGame);
   const currentEvent = useGameStore((s) => s.currentEvent);
   const chooseOption = useGameStore((s) => s.chooseOption);
@@ -44,12 +86,12 @@ export function HomeScreen() {
 
   const enter = useSharedValue(0);
   const stageV = useSharedValue(0);
-  const continueV = useSharedValue(0);
+  const startPointCtaV = useSharedValue(0);
+  const pathsCtaV = useSharedValue(0);
+  const directionCtaV = useSharedValue(0);
 
-  // A lapse step CAN produce only silent-vanish entries (opportunities with
-  // no resultText). When that happens there's nothing to show; the overlay
-  // must not block the EventCard/PhaseTransition that may also be queued, so
-  // we auto-clear lapsedThisStep on next tick.
+  // Auto-clear silent-only lapses (same logic as before — opportunities with
+  // no resultText shouldn't block the EventCard / phase overlay queue).
   const hasVisibleLapses = lapsedThisStep.some((l) => !!l.resultText);
   const hasSilentOnlyLapses =
     lapsedThisStep.length > 0 && !hasVisibleLapses;
@@ -72,11 +114,25 @@ export function HomeScreen() {
   }, [stage, stageV]);
 
   useEffect(() => {
-    continueV.value = withTiming(selectedPath ? 1 : 0, {
+    startPointCtaV.value = withTiming(selectedStartPoint ? 1 : 0, {
       duration: 260,
       easing: Easing.out(Easing.cubic),
     });
-  }, [selectedPath, continueV]);
+  }, [selectedStartPoint, startPointCtaV]);
+
+  useEffect(() => {
+    pathsCtaV.value = withTiming(selectedPath ? 1 : 0, {
+      duration: 260,
+      easing: Easing.out(Easing.cubic),
+    });
+  }, [selectedPath, pathsCtaV]);
+
+  useEffect(() => {
+    directionCtaV.value = withTiming(selectedDirection ? 1 : 0, {
+      duration: 260,
+      easing: Easing.out(Easing.cubic),
+    });
+  }, [selectedDirection, directionCtaV]);
 
   const titleLayerStyle = useAnimatedStyle(() => ({
     opacity:
@@ -104,7 +160,7 @@ export function HomeScreen() {
     ],
   }));
 
-  const pathsLayerStyle = useAnimatedStyle(() => ({
+  const startPointLayerStyle = useAnimatedStyle(() => ({
     opacity: interpolate(stageV.value, [0, 1, 2], [0, 1, 0], Extrapolation.CLAMP),
     transform: [
       {
@@ -118,18 +174,42 @@ export function HomeScreen() {
     ],
   }));
 
-  const continueStyle = useAnimatedStyle(() => ({
-    opacity: continueV.value,
-    transform: [{ translateY: (1 - continueV.value) * 14 }],
-  }));
-
-  const dashLayerStyle = useAnimatedStyle(() => ({
-    opacity: interpolate(stageV.value, [1, 2], [0, 1], Extrapolation.CLAMP),
+  const pathsLayerStyle = useAnimatedStyle(() => ({
+    opacity: interpolate(stageV.value, [1, 2, 3], [0, 1, 0], Extrapolation.CLAMP),
     transform: [
       {
         translateY: interpolate(
           stageV.value,
-          [1, 2],
+          [1, 2, 3],
+          [22, 0, -18],
+          Extrapolation.CLAMP,
+        ),
+      },
+    ],
+  }));
+
+  const directionLayerStyle = pathsLayerStyle; // identical curve; peer of paths
+
+  const startPointCtaStyle = useAnimatedStyle(() => ({
+    opacity: startPointCtaV.value,
+    transform: [{ translateY: (1 - startPointCtaV.value) * 14 }],
+  }));
+  const pathsCtaStyle = useAnimatedStyle(() => ({
+    opacity: pathsCtaV.value,
+    transform: [{ translateY: (1 - pathsCtaV.value) * 14 }],
+  }));
+  const directionCtaStyle = useAnimatedStyle(() => ({
+    opacity: directionCtaV.value,
+    transform: [{ translateY: (1 - directionCtaV.value) * 14 }],
+  }));
+
+  const dashLayerStyle = useAnimatedStyle(() => ({
+    opacity: interpolate(stageV.value, [2, 3], [0, 1], Extrapolation.CLAMP),
+    transform: [
+      {
+        translateY: interpolate(
+          stageV.value,
+          [2, 3],
           [22, 0],
           Extrapolation.CLAMP,
         ),
@@ -137,7 +217,18 @@ export function HomeScreen() {
     ],
   }));
 
-  const handleContinue = () => {
+  const handleStartPointContinue = () => {
+    if (!selectedStartPoint) return;
+    if (selectedStartPoint === 'university') setStage('paths');
+    else setStage('direction');
+  };
+
+  const handlePathContinue = () => {
+    startGame();
+    setStage('dashboard');
+  };
+
+  const handleDirectionContinue = () => {
     startGame();
     setStage('dashboard');
   };
@@ -163,12 +254,51 @@ export function HomeScreen() {
           </Animated.View>
 
           <Animated.View style={[styles.ctaBlock, titleCtaStyle]}>
-            <PrimaryButton label="Begin" onPress={() => setStage('paths')} />
+            <PrimaryButton label="Begin" onPress={() => setStage('startPoint')} />
             <Text style={styles.footnote}>Dev build · v0.1</Text>
           </Animated.View>
         </Animated.View>
 
-        {/* Foundation path selection layer */}
+        {/* Start-point picker — the new entry-machinery layer. Replaces the
+            old target-age "choose your finish" stage. */}
+        <Animated.View
+          style={[styles.layer, styles.stackLayer, startPointLayerStyle]}
+          pointerEvents={stage === 'startPoint' ? 'auto' : 'none'}
+        >
+          <View style={styles.stackHeader}>
+            <Text style={styles.eyebrow}>CHOOSE WHERE YOU START</Text>
+            <Text style={styles.stackTitle}>
+              When does{'\n'}your story{'\n'}begin?
+            </Text>
+            <Text style={styles.stackLede}>
+              Less runway means harder choices; more runway means a gentler arc.
+              All four runs target freedom by 60.
+            </Text>
+          </View>
+
+          <ScrollView
+            style={styles.cardScroll}
+            contentContainerStyle={styles.cardStack}
+            showsVerticalScrollIndicator={false}
+          >
+            {START_POINTS.map((sp) => (
+              <StartPointCard
+                key={sp.id}
+                startPoint={sp}
+                selected={selectedStartPoint === sp.id}
+                onSelect={() => selectStartPoint(sp.id)}
+              />
+            ))}
+          </ScrollView>
+
+          {selectedStartPoint ? (
+            <Animated.View style={startPointCtaStyle} pointerEvents="auto">
+              <PrimaryButton label="Continue" onPress={handleStartPointContinue} />
+            </Animated.View>
+          ) : null}
+        </Animated.View>
+
+        {/* Foundation path selection layer — only for University·18. */}
         <Animated.View
           style={[styles.layer, styles.pathsLayer, pathsLayerStyle]}
           pointerEvents={stage === 'paths' ? 'auto' : 'none'}
@@ -197,14 +327,55 @@ export function HomeScreen() {
           </ScrollView>
 
           {selectedPath ? (
-            <Animated.View style={continueStyle} pointerEvents="auto">
-              <PrimaryButton label="Continue" onPress={handleContinue} />
+            <Animated.View style={pathsCtaStyle} pointerEvents="auto">
+              <PrimaryButton label="Begin" onPress={handlePathContinue} />
             </Animated.View>
           ) : null}
         </Animated.View>
 
-        {/* Dashboard / run-summary layer. The summary takes over once
-            gameOver flips; resetSelection (called by Play Again) clears it. */}
+        {/* Direction sub-pick — only for non-university starts. */}
+        <Animated.View
+          style={[styles.layer, styles.directionLayer, directionLayerStyle]}
+          pointerEvents={stage === 'direction' ? 'auto' : 'none'}
+        >
+          <View style={styles.stackHeader}>
+            <Text style={styles.eyebrow}>
+              {selectedStartPoint
+                ? `AGE ${START_POINT_BY_ID[selectedStartPoint].startAge} · COMMIT YOUR DIRECTION`
+                : 'COMMIT YOUR DIRECTION'}
+            </Text>
+            <Text style={styles.stackTitle}>The shape{'\n'}of your{'\n'}years.</Text>
+            <Text style={styles.stackLede}>
+              You're skipping foundation. That means committing now — your past
+              has already tilted somewhere.
+            </Text>
+          </View>
+
+          <ScrollView
+            style={styles.cardScroll}
+            contentContainerStyle={styles.cardStack}
+            showsVerticalScrollIndicator={false}
+          >
+            {DIRECTION_OPTIONS.map((opt) => (
+              <DirectionCard
+                key={opt.id}
+                direction={opt.id}
+                title={opt.title}
+                blurb={opt.blurb}
+                selected={selectedDirection === opt.id}
+                onSelect={() => selectDirection(opt.id)}
+              />
+            ))}
+          </ScrollView>
+
+          {selectedDirection ? (
+            <Animated.View style={directionCtaStyle} pointerEvents="auto">
+              <PrimaryButton label="Begin" onPress={handleDirectionContinue} />
+            </Animated.View>
+          ) : null}
+        </Animated.View>
+
+        {/* Dashboard / run-summary layer. */}
         <Animated.View
           style={[styles.layer, styles.dashLayer, dashLayerStyle]}
           pointerEvents={stage === 'dashboard' ? 'auto' : 'none'}
@@ -218,19 +389,11 @@ export function HomeScreen() {
           ) : null}
         </Animated.View>
 
-        {/* Lapse ack — read-only acknowledgment of any parked decisions that
-            expired during the last advance/skip. Mounted BEFORE the decision
-            and phase-transition overlays so a skip that ended on a decision
-            shows the lapse first; once dismissed, lapsedThisStep clears and
-            those overlays take their normal turn. */}
+        {/* Lapse ack — surfaced before the EventCard / phase-transition stack. */}
         {stage === 'dashboard' && hasVisibleLapses && !gameOver ? (
           <LapsedOverlay lapsed={lapsedThisStep} onDismiss={dismissLapses} />
         ) : null}
 
-        {/* Decision overlay — rendered at root so the backdrop covers the
-            full screen, escaping the dashLayer's padding. Suppressed once
-            the run ends so it can't appear behind the summary. Also held
-            back while a lapse ack is up. */}
         {stage === 'dashboard' &&
         currentEvent &&
         !gameOver &&
@@ -239,18 +402,11 @@ export function HomeScreen() {
             event={currentEvent}
             onChoose={chooseOption}
             onDefer={deferDecision}
-            // EventCard hides "Decide later" when the player is at the parked
-            // decisions cap so a 4th can't be silently parked.
             pendingCount={player ? player.pendingDecisions.length : 0}
-            // Surface the player's accumulated leaning so the direction
-            // beat can highlight the aligned option as context.
             leaning={player ? leaningFromFlags(player.flags) : null}
           />
         ) : null}
 
-        {/* Phase-transition ack — rendered after EventCard so it sits on top
-            if both ever coexist. The store guarantees they don't, but the
-            stacking is still correct. Also held back while a lapse ack is up. */}
         {stage === 'dashboard' &&
         phaseTransition &&
         !gameOver &&
@@ -284,10 +440,36 @@ const styles = StyleSheet.create({
   titleLayer: {
     justifyContent: 'space-between',
   },
+  stackLayer: {
+    justifyContent: 'flex-start',
+    gap: spacing.lg,
+    paddingBottom: spacing.xl,
+  },
   pathsLayer: {
     justifyContent: 'flex-start',
     gap: spacing.lg,
     paddingBottom: spacing.xl,
+  },
+  directionLayer: {
+    justifyContent: 'flex-start',
+    gap: spacing.lg,
+    paddingBottom: spacing.xl,
+  },
+  stackHeader: {
+    gap: spacing.sm,
+  },
+  stackTitle: {
+    ...typography.hero,
+    color: colors.textPrimary,
+    fontSize: 34,
+    lineHeight: 38,
+    marginTop: spacing.xs,
+  },
+  stackLede: {
+    ...typography.body,
+    color: colors.textSecondary,
+    maxWidth: 320,
+    marginTop: spacing.xs,
   },
   dashLayer: {
     paddingTop: 72,

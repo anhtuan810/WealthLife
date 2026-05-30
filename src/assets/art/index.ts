@@ -60,7 +60,6 @@ export const ART: Record<string, number> = {
   'event_warehouse_role': require('./event_warehouse_role.png'),
   'event_whats_next': require('./event_whats_next.png'),
   'event_where_you_live': require('./event_where_you_live.png'),
-  'identity_medallion': require('./identity_medallion.png'),
   'phase_career': require('./phase_career.png'),
 };
 

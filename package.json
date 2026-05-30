@@ -25,7 +25,8 @@
     "android": "expo run:android",
     "prebuild": "expo prebuild --clean",
     "typecheck": "tsc --noEmit",
-    "sim:per-path": "tsc -p tsconfig.sim.json && node .sim-build/scripts/runPerPathReport.js"
+    "sim:per-path": "tsc -p tsconfig.sim.json && node .sim-build/scripts/runPerPathReport.js",
+    "sim:freedom-coverage": "tsc -p tsconfig.sim.json && node .sim-build/scripts/runFreedomCoverageSweep.js"
   },
   "private": true
 }
